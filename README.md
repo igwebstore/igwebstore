@@ -1,2 +1,3 @@
-# igwebstore
-final path to github for book
+### igwebstore
+## public distribution of files referenced in XXXX
+# more decription here
