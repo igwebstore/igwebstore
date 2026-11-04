@@ -33,7 +33,7 @@ class PostChap {
     }
     
     if ($domain == "ig2.com") {
-      $resolve = array(sprintf("%s:%d:%s", $url, 80, "192.168.1.134")); //
+      $resolve = array(sprintf("%s:%d:%s", $url, 80, "192.168.1.143")); //
       curl_setopt($ch, CURLOPT_RESOLVE, $resolve);
     }
     //execute post
@@ -59,7 +59,7 @@ class PostChap {
     curl_setopt($ch, CURLOPT_POST, 1);  // 1 == POST
     curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata);
 	  if ($url == "ig2.com") {
-		  $resolve = array(sprintf("%s:%d:%s", $url, 80, "192.168.1.134")); //
+		  $resolve = array(sprintf("%s:%d:%s", $url, 80, "192.168.1.143")); //
 		  curl_setopt($ch, CURLOPT_RESOLVE, $resolve);
 	  }
 	  //execute post

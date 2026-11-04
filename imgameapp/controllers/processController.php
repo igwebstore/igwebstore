@@ -116,12 +116,15 @@ class ProcessController {
                   'dayNo' => $uLoginObj->dayNo,
                   'sessionNo' => $uLoginObj->sessionNo,
                   'jType' => $uLoginObj->jType,
+                  'step1login' => 255
                 );
                 break;
               }
             }
             // now post the user session info into index.php
-            $this->responseData=$this->postie->do_curl_post($this->domain, $postdata);
+            setcookie('XDEBUG_SESSION','mh'); // send cookie to debug in phpStorm
+            //$this->responseData=$this->postie->do_curl_post($this->domain, $postdata);
+            $this->responseData = $this->postie->getPageHtml(true, $postdata);
           }
           else {
             $this->process = 0;        // page

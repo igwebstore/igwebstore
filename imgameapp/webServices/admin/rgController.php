@@ -2,7 +2,7 @@
 // -----------------------------------------------------------------------------
 // 
 // web service to support AJAX calls generated from experiment creation and
-// configuration pages
+// configuration registrationViews
 // 
 // -----------------------------------------------------------------------------
 ini_set('display_errors', 'On');
@@ -33,7 +33,7 @@ $rgID = isset($_GET['rgID']) ? $_GET['rgID'] : -1;
 	    }
 	    case "userGroupsPermissions" : {
 				$ugp = new stdClass();
-				$ugp->groupsMembership = $rgConfigurator->GetAllGroupMemberships(returnAsObject);
+				$ugp->groupsMembership = $rgConfigurator->GetGroupMemberships(returnAsObject);
 				$ugp->users = $rgConfigurator->userManager->getSystemUsers();
 				$ugp->currentUser = $rgConfigurator->userManager->getUserPermissions();
 				$ugp->exptUsers = $rgConfigurator->GetExperimentMemberships( returnAsObject);
@@ -59,14 +59,9 @@ $rgID = isset($_GET['rgID']) ? $_GET['rgID'] : -1;
 		    break;
 	    }
 	    case "exptUpdate" : {
-	    	$json = $rgConfigurator->UpdateExperimentUserMapping($content);
+	    	$json = $rgConfigurator->UpdateExperimentMapping($content);
 	    	break;
 	    }
-      case "roleChange" : {
-        $json = $rgConfigurator->ChangeRole($content);
-        break;
-      }
-      
 
       default : {
         $json = '{"status": false}';

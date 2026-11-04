@@ -108,7 +108,7 @@ function setStep1Controls() {
       $('#aSBox').val('');
     }
   });
-  // attach events to dynamic controls on expt config pages
+  // attach events to dynamic controls on expt config registrationViews
   $('#adminSectionOne').unbind();
   $('#adminSectionOne').on({
       change: function sendSelectToListener(e) {

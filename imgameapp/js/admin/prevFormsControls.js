@@ -140,7 +140,7 @@ function SetFormsPage(formsHtml) {
     $(this).addClass('closed');
     $(this).next('.formWrapper').hide();    
   });
-  // close all form-pages
+  // close all form-registrationViews
   $('#formsList .currentExperiments').find('.pageAccordion').each( function(e) {
 //    $(this).parent().removeClass('active');
     $(this).removeClass('open');

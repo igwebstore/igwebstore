@@ -29,6 +29,7 @@ class Step1Controller {
   public $exptId;
   public $dayNo;
   public $sessionNo;
+  public $clientId;
   private $allocationGeneration;  // this indicates which of 2 fixed-allocation paradigms used - for ultimate seating plan or repated groups
   private $Server;
   private $htmlBuilder;

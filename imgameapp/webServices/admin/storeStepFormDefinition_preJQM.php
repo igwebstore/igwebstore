@@ -67,7 +67,7 @@ $recruitmentCodeOptionLabel = $igrtSqli->real_escape_string($jSonArray['recruitm
 $nullRecruitmentCodeOptionLabel = $igrtSqli->real_escape_string($jSonArray['nullRecruitmentCodeOptionLabel']);
 
 $eqOptions = $jSonArray['eqOptions'];
-$pages = $jSonArray['pages'];
+$pages = $jSonArray['registrationViews'];
 $currentFocusControlId = $jSonArray['currentFocusControlId'];
 
 $storeForm = true;

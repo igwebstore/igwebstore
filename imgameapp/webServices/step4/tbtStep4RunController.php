@@ -2,7 +2,7 @@
 // -----------------------------------------------------------------------------
 // 
 // web service to support AJAX calls generated from  a linked-experiment TBT step4
-// monitor and runtime pages
+// monitor and runtime registrationViews
 // 
 // -----------------------------------------------------------------------------
 ini_set('display_errors', 'On');

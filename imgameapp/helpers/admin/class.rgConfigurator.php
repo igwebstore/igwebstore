@@ -17,18 +17,16 @@ class rgConfigurator {
 	private $permissions;
 	private $userPermissions; // complex object with lists of different permission views
 	private $systemUsers;     // list of system users which may be required in some functions
-  
-  private $allExperimentDefinitions; // = $this->GetExperimentDefinitions();
-  
-  
-  // <editor-fold defaultstate="collapsed" desc=" private members for registration, user management and research group management views">
+
+	// <editor-fold defaultstate="collapsed" desc=" private members to create json as required for registrationViews">
 
 	private function AddExperimentNames($filteredEGs) {
+		$allExperimentDefinitions = $this->GetExperimentDefinitions();
 		for ($i =0 ; $i<count($filteredEGs); $i++) {
 			// count == 1 mean 1 null entry - ignore and clean
 			if (count($filteredEGs[$i]->exptList) > 1) {
 				for($j=0; $j<count($filteredEGs[$i]->exptList); $j++) {
-					$filteredEGs[$i]->exptList[$j] = $this->GetExperimentDefinition($this->allExperimentDefinitions, $filteredEGs[$i]->exptList[$j]);
+					$filteredEGs[$i]->exptList[$j] = $this->GetExperimentDefinition($allExperimentDefinitions, $filteredEGs[$i]->exptList[$j]);
 				}
 			}
 			else {
@@ -36,7 +34,7 @@ class rgConfigurator {
 			}
 			if (count($filteredEGs[$i]->notAssociated) > 1) {
 				for($j=0; $j<count($filteredEGs[$i]->notAssociated); $j++) {
-					$filteredEGs[$i]->notAssociated[$j] = $this->GetExperimentDefinition($this->allExperimentDefinitions, $filteredEGs[$i]->notAssociated[$j]);
+					$filteredEGs[$i]->notAssociated[$j] = $this->GetExperimentDefinition($allExperimentDefinitions, $filteredEGs[$i]->notAssociated[$j]);
 				}
 			}
 			else {
@@ -55,9 +53,9 @@ class rgConfigurator {
 		//return null;
 	}
 
-	private function GetExperimentDefinitions($returnOrder) {
+	private function GetExperimentDefinitions() {
 		global $igrtSqli;
-		$exptQry = $returnOrder == returnASC ?"SELECT exptId, title FROM igExperiments ORDER BY exptId ASC" : "SELECT exptId, title FROM igExperiments ORDER BY exptId DESC";
+		$exptQry = "SELECT exptId, title FROM igExperiments ORDER BY exptId DESC";
 		$exptResult = $igrtSqli->query($exptQry);
 		return $exptResult->fetch_all(MYSQLI_ASSOC);
 	}
@@ -169,7 +167,7 @@ class rgConfigurator {
 		}
 	}
 
-	public function UpdateExperimentUserMapping($content) {
+	public function UpdateExperimentMapping($content) {
 		global $igrtSqli;
 		if ($content[2] == 1) {
 			$insertSql = sprintf("INSERT INTO igExperimentUserMembers (exptId, userId) VALUES('%s', '%s')", $content[0], $content[1]);
@@ -180,12 +178,6 @@ class rgConfigurator {
 			$igrtSqli->query($deleteSql);
 		}
 	}
-  
-  public function ChangeRole($content) {
-    global $igrtSqli;
-    $updateSql = sprintf("UPDATE igUsers SET permissions='%s' WHERE id = '%s'",$content[1], $content[0]);
-    $igrtSqli->query($updateSql);
-  }
 
 	public function GetFilteredGroupExperiments($returnType) {
 
@@ -203,7 +195,7 @@ class rgConfigurator {
 			if ($egMapping['id'] != $currentGroupDef->groupID) {
 				if ($currentGroupDef->groupID > -1) {
 
-					// decide whether to add the finished group to the current user's list
+					// decide whether to add the finished group to thee current user's list
 					if ($this->UserHasPermission($currentGroupDef->groupID)) {
 						// get/create ui status for this expt-group and uid
 						$currentGroupDef->isClosed = $this->GetUIStatus($currentGroupDef->groupID);
@@ -248,43 +240,13 @@ class rgConfigurator {
 		$groupsSql = "SELECT * FROM igExperimentGroups";
 		$groupsResult = $igrtSqli->query($groupsSql);
 		while ($groupRow = $groupsResult->fetch_object()) {
-      $groupMappings = $this->GetExperimentGroupMappings(returnAsObject, $groupRow->id);
-			array_push($experimentgroups->groups, ['id' => $groupRow->id, 'groupname' => $groupRow->GroupName, 'groupmappings'=>$groupMappings]);
+			array_push($experimentgroups->groups, ['id' => $groupRow->id, 'groupname' => $groupRow->GroupName]);
 		}
 
 		return $returnType == returnAsJSON ? json_encode($experimentgroups) : $experimentgroups;
 	}
-  
-  private function GetExperimentGroupMappings($returnType, $groupId) {
-    global $igrtSqli;
-    
-    $membership = new stdClass();
-    $membership->experiments = [];
-    $membership->nonexperiments = [];
-    
-    $mappingsQry = sprintf("SELECT * FROM igExperimentGroupMappings WHERE groupId = '%s'", $groupId);
-    $mappingsResult = $igrtSqli->query($mappingsQry);
-    while ($mappingRow = $mappingsResult->fetch_object()) {
-      $exptDef = $this->GetExperimentDefinition($this->allExperimentDefinitions, $mappingRow->exptId);
-      array_push($membership->experiments, ['exptId' => $mappingRow->exptId, 'title' => $exptDef['title'] ]);
-    }
-    foreach($this->allExperimentDefinitions as $expt) {
-      $isExperiment = false;
-      foreach($membership->experiments as $experiment) {
-        if ($experiment['exptId'] == $expt['exptId']) //
-          $isExperiment = true;
-      }
-      if (!$isExperiment) {
-        $exptDef = $this->GetExperimentDefinition($this->allExperimentDefinitions, $expt['exptId']);
-        array_push($membership->nonexperiments, ['exptId' => $expt['exptId'], 'title' => $exptDef['title']]);
-      }
-    }
-    
-    return $returnType == returnAsJSON ? json_encode($membership) : $membership;
-  }
-  
-  
-  public function GetAllGroupMemberships($returnType) {
+
+	public function GetGroupMemberships($returnType) {
 		global $igrtSqli;
 
 		$memberships = [];
@@ -316,7 +278,6 @@ class rgConfigurator {
 		}
 		return $returnType == returnAsJSON ? json_encode($memberships) : $memberships;
 	}
-  
 
 	public function GetExperimentMemberships($returnType) {
 		global $igrtSqli;
@@ -362,8 +323,8 @@ class rgConfigurator {
 		$this->userManager = new userManagement($uid);  // is public as may be used from top level controller
 		$this->userPermissions = $this->userManager->GetUserPermissions();
 		$this->systemUsers = $this->userManager->GetSystemUsers();
-    $this->allExperimentDefinitions = $this->GetExperimentDefinitions(returnASC);
-  }
+
+	}
 
 // </editor-fold>
 

@@ -29,9 +29,7 @@ error_reporting(E_ALL);
 $full_ws_path=realpath(dirname(__FILE__));
 $root_path=substr($full_ws_path, 0, strlen($full_ws_path)-18);
 include_once $root_path.'/domainSpecific/mySqlObject.php';     
-include_once $root_path.'/helpers/parseJSON.php';
-
-global $igrtSqli;
+include_once $root_path.'/helpers/parseJSON.php';              
 
 $rawBody = file_get_contents('php://input');
 $jSonArray = json_decode($rawBody, true);
@@ -41,7 +39,7 @@ $formType = $jSonArray['formType'];
 // = $jSonArray['formName'];
 //$introAccordionClosed = $jSonArray['introAccordionClosed'];
 $finalAccordionClosed = $jSonArray['finalAccordionClosed'];
-$introAccordionClosed = $jSonArray['introAccordionClosed'];
+$startPageAccordionClosed = $jSonArray['startPageAccordionClosed'];
 $pagesAccordionClosed = $jSonArray['pagesAccordionClosed'];
 $recruitmentAccordionClosed = $jSonArray['recruitmentAccordionClosed'];
 $formTitle = $igrtSqli->real_escape_string($jSonArray['formTitle']);
@@ -73,7 +71,7 @@ $recruitmentCodeOptionLabel = $igrtSqli->real_escape_string($jSonArray['recruitm
 $nullRecruitmentCodeOptionLabel = $igrtSqli->real_escape_string($jSonArray['recruitmentCodeNoLabel']);
 
 //$eqOptions = $jSonArray['eqOptions'];
-$pages = $jSonArray['pages'];
+$pages = $jSonArray['registrationViews'];
 $currentFocusControlId = $jSonArray['currentFocusControlId'];
 
 $storeForm = true;
@@ -91,20 +89,19 @@ if ($storeForm) {
 	$igrtSqli->query($cleanQuestions);
 	$cleanOptions = "DELETE FROM fdStepFormsEligibilityQuestionsOptions WHERE exptId=$exptId AND formType=$formType";
 	$igrtSqli->query($cleanOptions);
-	$cleanQuestions = "DELETE FROM fdStepFormsPageFilterQuestions WHERE exptId=$exptId AND formType=$formType";
+	$cleanQuestions = "DELETE FROM fdStepFormsPageFiltertQuestions WHERE exptId=$exptId AND formType=$formType";
 	$igrtSqli->query($cleanQuestions);
-	$cleanOptions = "DELETE FROM fdStepFormsPageFilterQuestionsOptions WHERE exptId=$exptId AND formType=$formType";
+	$cleanOptions = "DELETE FROM fdStepFormsPageFiterQuestionsOptions WHERE exptId=$exptId AND formType=$formType";
 	$igrtSqli->query($cleanOptions);
   $cleanOptions = "DELETE FROM fdStepFormsGridValues WHERE exptId=$exptId AND formType=$formType";
   $igrtSqli->query($cleanOptions);
   // insert new definition
-  $makeForm=sprintf("INSERT INTO fdStepForms (exptId, formType, formTitle, formInst, finalMsg, finalButtonLabel,"
-      . "introAccordionClosed, finalAccordionClosed, pagesAccordionClosed, recruitmentAccordionClosed,"
+  $makeForm=sprintf("INSERT INTO fdStepForms (exptId, formType, formTitle, formInst, finalMsg, finalButtonLabel, startPageAccordionClosed, finalAccordionClosed, pagesAccordionClosed, recruitmentAccordionClosed,"
       . "useIntroPage, introPageTitle, introPageMessage, introPageButtonLabel, useEligibilityQ, currentFocusControlId, definitionComplete, "
       . "useRecruitmentCode, allowNullRecruitmentCode, recruitmentCodeLabel, recruitmentCodeMessage, recruitmentCodeOptionLabel, nullRecruitmentCodeOptionLabel, useFinalPage) "
       . "VALUES ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s')",
     $exptId, $formType, $formTitle, $formInst, $finalMsg, $finalButtonLabel,
-	  $introAccordionClosed, $finalAccordionClosed, $pagesAccordionClosed, $recruitmentAccordionClosed,
+	  $startPageAccordionClosed, $finalAccordionClosed, $pagesAccordionClosed, $recruitmentAccordionClosed,
 	  $useIntroPage, $introPageTitle, $introPageMessage, $introPageButtonLabel, $useEligibilityQ, $currentFocusControlId, $definitionComplete,
 	  $useRecruitmentCode, $allowNullRecruitmentCode, $recruitmentCodeLabel, $recruitmentCodeMessage, $recruitmentCodeOptionLabel, $nullRecruitmentCodeOptionLabel, $useFinalPage);
   $igrtSqli->query($makeForm);
@@ -206,17 +203,17 @@ if ($storeForm) {
 // store the one filter question for this page
 //	  $makeFilterQuestion.= sprintf("('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')",
 //		  $exptId, $formType, $pageNo,
-//		  $pages[$i]['filterQuestion']['fqType'],
-//		  $igrtSqli->real_escape_string($pages[$i]['filterQuestion']['fqLabel']),
-//		  $pages[$i]['filterQuestion']['fqAccordionClosed'],
-//		  $pages[$i]['filterQuestion']['fqOptionsAccordionClosed'],
-//		  0 // $pages[$i]['filterQuestion']['filterMapping'] - don't think filterMapping is used
+//		  $registrationViews[$i]['filterQuestion']['fqType'],
+//		  $igrtSqli->real_escape_string($registrationViews[$i]['filterQuestion']['fqLabel']),
+//		  $registrationViews[$i]['filterQuestion']['fqAccordionClosed'],
+//		  $registrationViews[$i]['filterQuestion']['fqOptionsAccordionClosed'],
+//		  0 // $registrationViews[$i]['filterQuestion']['filterMapping'] - don't think filterMapping is used
 //	  );
 // store filter question options
-//	  for ($k=0; $k<count($pages[$i]['filterQuestion']['fqOptions']); $k++) {
+//	  for ($k=0; $k<count($registrationViews[$i]['filterQuestion']['fqOptions']); $k++) {
 //		  if (($i>0) || ($k>0)) { $makeFilterOption.= ','; }
 //		  $makeFilterOption.= sprintf("('%s', '%s', '%s', '%s', '%s')", $exptId, $formType, $pageNo,
-//			  $igrtSqli->real_escape_string($pages[$i]['filterQuestion']['fqOptions'][$k]['fqoLabel']),
-//			  $pages[$i]['filterQuestion']['fqOptions'][$k]['responseMapping']);
+//			  $igrtSqli->real_escape_string($registrationViews[$i]['filterQuestion']['fqOptions'][$k]['fqoLabel']),
+//			  $registrationViews[$i]['filterQuestion']['fqOptions'][$k]['responseMapping']);
 //	  }
 // store questions per page

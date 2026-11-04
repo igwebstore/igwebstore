@@ -22,10 +22,10 @@ class Emailer
       $mail->isSMTP();
       //$mail->SMTPDebug = SMTP::DEBUG_SERVER;
       $mail->SMTPAutoTLS = false;
-      $mail->Host = '';
+      $mail->Host = 'mail.imitationgame.co.uk';
       $mail->SMTPAuth = true;
-      $mail->Username = '';
-      $mail->Password = '';
+      $mail->Username = 'root';
+      $mail->Password = 'WRMgbYy3cGfF';
       $mail->addAddress($address);
       $mail->setFrom($from);
       $mail->Subject = $subject;
