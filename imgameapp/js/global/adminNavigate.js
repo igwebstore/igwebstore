@@ -114,12 +114,40 @@ function goBack() {
       paramItems['isMultiSectionPage'] = 1;
       paramItems['sectionNo'] = 1;
       break;
+    case '3_3_1':
+      // step1 judge-day-session data review   - - need to go back this parent selector
+      paramItems['pageLabel'] = '1_2_1';
+      paramItems['exptId'] = exptId;
+      paramItems['isMultiSectionPage'] = 1;
+      paramItems['sectionNo'] = 17;
+      break;
+    case '8_3_3' :
+      // data view from odd-even selection - need to go back this selector
+      paramItems['pageLabel'] = '1_2_1';
+      paramItems['exptId'] = exptId;
+      paramItems['isMultiSectionPage'] = 1;
+      paramItems['sectionNo'] = 29;
+      break;
     case '8_3_4':
       // sub-section of individual experiment - need to go back to selector
       paramItems['pageLabel'] = '1_2_1';
       paramItems['exptId'] = exptId;
       paramItems['isMultiSectionPage'] = 1;
       paramItems['sectionNo'] = 30;
+      break;
+    case '8_3_5' :
+      // data view from odd-even selection - need to go back this selector
+      paramItems['pageLabel'] = '1_2_1';
+      paramItems['exptId'] = exptId;
+      paramItems['isMultiSectionPage'] = 1;
+      paramItems['sectionNo'] = 31;
+      break;
+    case '8_3_6' :
+      // data view from odd-even selection - need to go back this selector
+      paramItems['pageLabel'] = '1_2_1';
+      paramItems['exptId'] = exptId;
+      paramItems['isMultiSectionPage'] = 1;
+      paramItems['sectionNo'] = 33;
       break;
     case '8_3_7':
       // sub-section of individual experiment - need to go back to selector
@@ -129,7 +157,14 @@ function goBack() {
       paramItems['sectionNo'] = 34;
       break;
     case '8_3_8_0':
-      // qual donwload of classic-exp data
+      // qual download of classic-exp data
+      paramItems['pageLabel'] = '1_2_1';
+      paramItems['exptId'] = exptId;
+      paramItems['isMultiSectionPage'] = 1;
+      paramItems['sectionNo'] = 39;
+      break;
+    case '8_3_8_1':
+      // quant download of classic-exp data
       paramItems['pageLabel'] = '1_2_1';
       paramItems['exptId'] = exptId;
       paramItems['isMultiSectionPage'] = 1;
@@ -193,6 +228,10 @@ function refreshPage() {
 }
 
 $('#backB').click(function() {
+  goBack();
+});
+
+$('#BackButton').click(function() {
   goBack();
 });
 
