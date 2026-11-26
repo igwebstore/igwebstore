@@ -22,7 +22,7 @@ if (!isset($root_path)) { $root_path = $_SERVER['DOCUMENT_ROOT']; }
   // see if in active session, and set parameters accordingly
   $sqlQry_Session=sprintf("SELECT * FROM igActiveStep1Users WHERE uid='%s'", $uid);
   $activeResult=$igrtSqli->query($sqlQry_Session);
-  if ($activeResult) {
+  if ($activeResult->num_rows>0) {
     $sessionRow=$activeResult->fetch_object();
     $jSonOut['uid']=$sessionRow->uid;
     $jSonOut['exptId']=$sessionRow->exptId;

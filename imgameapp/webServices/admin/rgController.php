@@ -2,12 +2,13 @@
 // -----------------------------------------------------------------------------
 // 
 // web service to support AJAX calls generated from experiment creation and
-// configuration registrationViews
+// configuration pages
 // 
 // -----------------------------------------------------------------------------
 ini_set('display_errors', 'On');
 error_reporting(E_ALL);
 if (!isset($root_path)) { $root_path = $_SERVER['DOCUMENT_ROOT']; }
+include_once $root_path.'/domainSpecific/mySqlObject.php';
 require_once($root_path.'/helpers/admin/class.rgConfigurator.php');
 include_once $root_path.'/helpers/admin/enums.php';
 
@@ -20,7 +21,8 @@ $rgID = isset($_GET['rgID']) ? $_GET['rgID'] : -1;
 
 
   function processMessage($_messageType, $uid, $rgID, $permissions, $content) {
-    $rgConfigurator = new rgConfigurator($uid, $rgID, $permissions);
+    global $igrtSqli;
+    $rgConfigurator = new rgConfigurator($igrtSqli, $uid, $rgID, $permissions);
     switch ($_messageType) {
 			// get RG data
 	    case 'rgExperimentGroups' : {

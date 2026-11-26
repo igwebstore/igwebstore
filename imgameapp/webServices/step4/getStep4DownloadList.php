@@ -15,7 +15,7 @@ if ($permissions>=128) {
   $html = "<p>No Step4 data exists.</p>";
   $uniqueIdQry = "SELECT DISTINCT(exptId) AS exptId FROM dataSTEP4";
   $uidResult = $igrtSqli->query($uniqueIdQry);
-  if ($uidResult) {
+  if ($uidResult->num_rows>0) {
     $html = "<table><tr><th>expt #</th><th>title</th><th width='33%'>Even</th><th width='33%'>Odd</th></tr>";   
     while ($eidRow = $uidResult->fetch_object()) {
       $exptId = $eidRow->exptId;
@@ -23,7 +23,7 @@ if ($permissions>=128) {
       $qry ="CALL getExperimentDetails($exptId,@title)";
       $igrtSqli->query($qry);
       $sr2 = $igrtSqli->query("SELECT @title as exptTitle");
-      if ($sr2) {
+      if ($sr2->num_rows>0) {
         $row = $sr2->fetch_object();
         $exptTitle = $row->exptTitle;    
       }

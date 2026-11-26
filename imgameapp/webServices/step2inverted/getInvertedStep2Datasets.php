@@ -14,7 +14,7 @@ if ($permissions>=128) {
   $html = "<p>No completed inverted Step2 sessions exist.</p>";
   $uniqueIdQry = "SELECT DISTINCT(exptId) AS exptId FROM dataSTEP2inverted ORDER BY exptId DESC";
   $uidResult = $igrtSqli->query($uniqueIdQry);
-  if ($uidResult) {
+  if ($uidResult->num_rows>0) {
     $html = "<table><tr><th>expt #</th><th>title</th><th># of ppts</th><th>Odd</th><th>Even</th></tr>";
     while ($uidRow = $uidResult->fetch_object()) {
       $exptId = $uidRow->exptId;

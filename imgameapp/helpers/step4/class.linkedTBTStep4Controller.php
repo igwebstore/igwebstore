@@ -199,8 +199,8 @@ class step4Controller {
     //get min exptId where rated = 0
     $anyExptIdqry = sprintf("SELECT * FROM wt_LinkedTBTStep4datasets WHERE s4jNo='%s' AND rated=0", $s4jNo);
     $anyResult = $igrtSqli->query($anyExptIdqry);
-    //echo $anyResult->affected_rows.' '.$igrtSqli->affected_rows.PHP_EOL;
-    if ($igrtSqli->affected_rows !=0 ) {
+    //echo $anyResult->num_rows.' '.$igrtSqli->num_rows.PHP_EOL;
+    if ($igrtSqli->num_rows !=0 ) {
       $getMinEIqry = sprintf("SELECT MIN(exptId) as exptId FROM wt_LinkedTBTStep4datasets WHERE s4jNo='%s' AND rated=0", $s4jNo);
       $minEIResult = $igrtSqli->query($getMinEIqry);
       if ($minEIResult) {

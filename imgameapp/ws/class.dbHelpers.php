@@ -10,7 +10,7 @@ class DBHelper {
   function getEmailFromUid($uid) {
     $qry=sprintf("SELECT * FROM igUsers WHERE id='%s'",$uid);
     $result=$this->igrtSqli->query($qry);
-    if ($this->igrtSqli->affected_rows > 0) {
+    if ($this->igrtSqli->num_rows > 0) {
       $row=$result->fetch_object();
       return $row->email;
     }

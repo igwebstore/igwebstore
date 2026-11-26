@@ -8,23 +8,22 @@ ini_set('display_errors', 'On');
 error_reporting(E_ALL);
 if (!isset($root_path)) { $root_path = $_SERVER['DOCUMENT_ROOT']; }
 include_once $root_path.'/helpers/models/class.experimentModel.php';
-include_once $root_path.'/domainSpecific/mySqlObject.php';
 require_once($root_path.'/helpers/forms/class.stepFormsHandler.php');
 
 class stepFormRuntimeController {
-  private $formName;
   private $jType;
   private $exptId;
   private $formType;
-  public $debug;
+  private $igrtSqli;  // not used by this class, but injected into stepFormsHandler
   public $formDef;  // public during debug
   
 // <editor-fold defaultstate="collapsed" desc=" interface functions">
 
   function getStepFormRuntimeSettings() {
-    $stepFormsHandler = new stepFormsHandler($this->exptId, $this->formType);
+    $stepFormsHandler = new stepFormsHandler($this->igrtSqli, $this->exptId, $this->formType);
     $stepFormsHandler->setJType($this->jType);
     $this->formDef = $stepFormsHandler->getForm();
+    // build xml
     $xml = sprintf("<message>"
         . "<messageType>initForm</messageType>"
         . "<useJTypeSelector>%s</useJTypeSelector>"
@@ -54,28 +53,14 @@ class stepFormRuntimeController {
   
 // </editor-fold>
   
-// <editor-fold defaultstate="collapsed" desc=" helpers">
-
-  function getFormName() {
-    global $igrtSqli;
-    $qry = sprintf("SELECT * FROM fdStepFormsNames WHERE formType='%s'", $this->formType);
-    $result = $igrtSqli->query($qry);
-    if ($result) {
-      $row = $result->fetch_object();
-      return $row->formName;
-    }
-    return 'not set';
-  }
-
-// </editor-fold>  
 
 // <editor-fold defaultstate="collapsed" desc=" constructor">
 
-  function __construct($exptId, $formType, $jType) {
-    $this->exptId = $exptId;
-    $this->formType = $formType;
-    $this->jType = $jType;
-    $this->formName = $this->getFormName(); // might not be necessary
+  function __construct($_igrtSqli, $_exptId, $_formType, $_jType) {
+    $this->igrtSqli = $_igrtSqli;
+    $this->exptId = $_exptId;
+    $this->formType = $_formType;
+    $this->jType = $_jType;
   }
   
 // </editor-fold>

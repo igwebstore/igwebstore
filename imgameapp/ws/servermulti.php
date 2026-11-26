@@ -1171,7 +1171,7 @@ if ($connectionOK) {
   }
   $Server = new PHPWebSocket();
   $dbHelper = new DBHelper($igrtSqli);
-  $ecHelper = new experimentConfigurator(28, -1); // use mh's uid 28 to intialise when used by the step1 controller
+  $ecHelper = new experimentConfigurator($igrtSqli,28, -1); // use mh's uid 28 to intialise when used by the step1 controller
   $step1HtmlBuilder = new htmlBuilder();
   if ($cliDomain == "ig2.com") {
     $domainName = '192.168.1.143';

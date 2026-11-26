@@ -117,7 +117,7 @@ class PHPRtfLite_Container_Section extends PHPRtfLite_Container
     protected $_gutter;
 
     /**
-     * flag, if true margins will be the opposite for odd and even registrationViews
+     * flag, if true margins will be the opposite for odd and even pages
      * @var boolean
      */
     protected $_useMirrorMargins;
@@ -171,7 +171,7 @@ class PHPRtfLite_Container_Section extends PHPRtfLite_Container
 
 
     /**
-     * sets the paper width of registrationViews in section.
+     * sets the paper width of pages in section.
      *
      * @param float $width paper width
      */
@@ -182,7 +182,7 @@ class PHPRtfLite_Container_Section extends PHPRtfLite_Container
 
 
     /**
-     * gets the paper width of registrationViews in section.
+     * gets the paper width of pages in section.
      *
      * @return float paper width
      */
@@ -193,7 +193,7 @@ class PHPRtfLite_Container_Section extends PHPRtfLite_Container
 
 
     /**
-     * sets the paper height of registrationViews in section.
+     * sets the paper height of pages in section.
      *
      * @param float $height paper height
      */
@@ -204,7 +204,7 @@ class PHPRtfLite_Container_Section extends PHPRtfLite_Container
 
 
     /**
-     * gets the paper height of registrationViews in section.
+     * gets the paper height of pages in section.
      *
      * @return float paper height
      */
@@ -215,7 +215,7 @@ class PHPRtfLite_Container_Section extends PHPRtfLite_Container
 
 
     /**
-     * sets the margins of registrationViews in section.
+     * sets the margins of pages in section.
      *
      * @param float $marginLeft Margin left
      * @param float $marginTop Margin top
@@ -232,7 +232,7 @@ class PHPRtfLite_Container_Section extends PHPRtfLite_Container
 
 
     /**
-     * sets the left margin of document registrationViews.
+     * sets the left margin of document pages.
      *
      * @param float $margin
      */
@@ -243,7 +243,7 @@ class PHPRtfLite_Container_Section extends PHPRtfLite_Container
 
 
     /**
-     * gets the left margin of document registrationViews.
+     * gets the left margin of document pages.
      *
      * @return float $margin
      */
@@ -254,7 +254,7 @@ class PHPRtfLite_Container_Section extends PHPRtfLite_Container
 
 
     /**
-     * sets the right margin of document registrationViews.
+     * sets the right margin of document pages.
      *
      * @param float $margin
      */
@@ -265,7 +265,7 @@ class PHPRtfLite_Container_Section extends PHPRtfLite_Container
 
 
     /**
-     * gets the right margin of document registrationViews.
+     * gets the right margin of document pages.
      *
      * @return float $margin
      */
@@ -276,7 +276,7 @@ class PHPRtfLite_Container_Section extends PHPRtfLite_Container
 
 
     /**
-     * sets the top margin of document registrationViews.
+     * sets the top margin of document pages.
      *
      * @param float $margin
      */
@@ -287,7 +287,7 @@ class PHPRtfLite_Container_Section extends PHPRtfLite_Container
 
 
     /**
-     * gets the top margin of document registrationViews.
+     * gets the top margin of document pages.
      *
      * @return float $margin
      */
@@ -298,7 +298,7 @@ class PHPRtfLite_Container_Section extends PHPRtfLite_Container
 
 
     /**
-     * sets the bottom margin of document registrationViews.
+     * sets the bottom margin of document pages.
      *
      * @param float $margin
      */
@@ -309,7 +309,7 @@ class PHPRtfLite_Container_Section extends PHPRtfLite_Container
 
 
     /**
-     * gets the bottom margin of document registrationViews.
+     * gets the bottom margin of document pages.
      *
      * @return float $margin
      */
@@ -343,7 +343,7 @@ class PHPRtfLite_Container_Section extends PHPRtfLite_Container
 
 
     /**
-     * sets the margin definitions on left and right registrationViews.<br>
+     * sets the margin definitions on left and right pages.<br>
      * Notice: Does not work with OpenOffice.
      */
     public function setMirrorMargins()
@@ -545,9 +545,9 @@ class PHPRtfLite_Container_Section extends PHPRtfLite_Container
      *
      * @param string $type Represented by class constants PHPRtfLite_Container_Header::TYPE_*
      * Possible values: <br>
-     *   PHPRtfLite_Container_Header::TYPE_ALL      => 'all' - all registrationViews (different odd and even headers/footers must be not set) <br>
-     *   PHPRtfLite_Container_Header::TYPE_LEFT     => 'left' - left registrationViews (different odd and even headers/footers must be set) <br>
-     *   PHPRtfLite_Container_Header::TYPE_RIGHT    => 'right' - right registrationViews (different odd and even headers/footers must be set) <br>
+     *   PHPRtfLite_Container_Header::TYPE_ALL      => 'all' - all pages (different odd and even headers/footers must be not set) <br>
+     *   PHPRtfLite_Container_Header::TYPE_LEFT     => 'left' - left pages (different odd and even headers/footers must be set) <br>
+     *   PHPRtfLite_Container_Header::TYPE_RIGHT    => 'right' - right pages (different odd and even headers/footers must be set) <br>
      *   PHPRtfLite_Container_Header::TYPE_FIRST    => 'first' - first page
      *
      * @return PHPRtfLite_Container_Header
@@ -562,7 +562,7 @@ class PHPRtfLite_Container_Section extends PHPRtfLite_Container
 
 
     /**
-     * gets defined headers for document registrationViews.
+     * gets defined headers for document pages.
      *
      * @return array contains PHPRtfLite_Container_Header objects
      */
@@ -576,9 +576,9 @@ class PHPRtfLite_Container_Section extends PHPRtfLite_Container
      * creates footer for the document.
      *
      * @param string $type Represented by class constants PHPRtfLite_Container_Footer::TYPE_*
-     *   PHPRtfLite_Container_Footer::TYPE_ALL      => 'all' - all registrationViews (different odd and even headers/footers must be not set) <br>
-     *   PHPRtfLite_Container_Footer::TYPE_LEFT     => 'left' - left registrationViews (different odd and even headers/footers must be set) <br>
-     *   PHPRtfLite_Container_Footer::TYPE_RIGHT    => 'right' - right registrationViews (different odd and even headers/footers must be set)     <br>
+     *   PHPRtfLite_Container_Footer::TYPE_ALL      => 'all' - all pages (different odd and even headers/footers must be not set) <br>
+     *   PHPRtfLite_Container_Footer::TYPE_LEFT     => 'left' - left pages (different odd and even headers/footers must be set) <br>
+     *   PHPRtfLite_Container_Footer::TYPE_RIGHT    => 'right' - right pages (different odd and even headers/footers must be set)     <br>
      *   PHPRtfLite_Container_Footer::TYPE_FIRST    => 'first' - first page
      *
      * @return PHPRtfLite_Container_Footer
@@ -593,7 +593,7 @@ class PHPRtfLite_Container_Section extends PHPRtfLite_Container
 
 
     /**
-     * gets defined footers for document registrationViews.
+     * gets defined footers for document pages.
      *
      * @return array contains PHPRtfLite_Container_FOOTER objects
      */

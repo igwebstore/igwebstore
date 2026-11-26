@@ -42,7 +42,7 @@ AND email > ''";
 		$userExptQuery = sprintf("SELECT * FROM igExperiments WHERE ownerId='%s'", $this->uid);
 		$userExptResult = $igrtSqli->query($userExptQuery);
 		$userPermissions->ownedExperiments = [];
-		if ($userExptResult) {
+		if ($userExptResult->num_rows>0) {
 			while ($userExptRow = $userExptResult->fetch_object()) {
 				array_push($userPermissions->ownedExperiments, $userExptRow->exptId);
 			}
@@ -51,7 +51,7 @@ AND email > ''";
 		$userMappingQuery = sprintf("SELECT * FROM igExperimentUserMembers WHERE userId='%s'", $this->uid);
 		$userMappingResult = $igrtSqli->query($userMappingQuery);
 		$userPermissions->userExperimentMappings = [];
-		if ($userMappingResult) {
+		if ($userMappingResult->num_rows>0) {
 			while ($userMappingRow = $userMappingResult->fetch_object()) {
 				array_push($userPermissions->userExperimentMappings, $userMappingRow->exptId);
 			}
@@ -60,7 +60,7 @@ AND email > ''";
 		$userGroupQuery = sprintf("SELECT * FROM igExperimentGroupMembers WHERE userId='%s'", $this->uid);
 		$userGroupResult = $igrtSqli->query($userGroupQuery);
 		$userPermissions->groupOwnedExperiments = [];
-		if ($userGroupResult) {
+		if ($userGroupResult->num_rows>0) {
 			while ($groupMembership = $userGroupResult->fetch_object()) {
 				$userPermissions->userGroupMemberships[]= $groupMembership->groupId;
 				$groupExperimentQuery = sprintf("SELECT * FROM igExperimentGroupMappings WHERE groupId='%s'", $groupMembership->groupId);

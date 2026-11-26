@@ -4187,9 +4187,9 @@ $.mobile.getMaxScrollForTransition = $.mobile.getMaxScrollForTransition || defau
 		var fileUrl = path.getFilePath( absUrl ),
 
 			// The version of the Url actually stored in the data-url attribute of
-			// the page. For embedded pages, it is just the id of the page. For registrationViews
+			// the page. For embedded pages, it is just the id of the page. For pages
 			// within the same domain as the document base, it is the site relative
-			// path. For cross-domain registrationViews (Phone Gap only) the entire absolute Url
+			// path. For cross-domain pages (Phone Gap only) the entire absolute Url
 			// used to load the page.
 			dataUrl = path.convertUrlToDataUrl( absUrl );
 
@@ -4264,7 +4264,7 @@ $.mobile.getMaxScrollForTransition = $.mobile.getMaxScrollForTransition || defau
 
 		if ( settings.showLoadMsg ) {
 
-			// This configurable timeout allows cached registrationViews a brief delay to load without showing a message
+			// This configurable timeout allows cached pages a brief delay to load without showing a message
 			var loadMsgDelay = setTimeout(function() {
 					$.mobile.showPageLoadingMsg();
 				}, settings.loadMsgDelay ),
@@ -4357,7 +4357,7 @@ $.mobile.getMaxScrollForTransition = $.mobile.getMaxScrollForTransition || defau
 					}
 
 					//append to page and enhance
-					// TODO taging a page with external to make sure that embedded registrationViews aren't removed
+					// TODO taging a page with external to make sure that embedded pages aren't removed
 					//      by the various page handling code is bad. Having page handling code in many
 					//      places is bad. Solutions post 1.0
 					page
@@ -4370,7 +4370,7 @@ $.mobile.getMaxScrollForTransition = $.mobile.getMaxScrollForTransition || defau
 
 					enhancePage( page, settings.role );
 
-					// Enhancing the page may result in new dialogs/sub registrationViews being inserted
+					// Enhancing the page may result in new dialogs/sub pages being inserted
 					// into the DOM. If the original absUrl refers to a sub-page, that is the
 					// real page we are interested in.
 					if ( absUrl.indexOf( "&" + $.mobile.subPageUrlKey ) > -1 ) {
@@ -4563,7 +4563,7 @@ $.mobile.getMaxScrollForTransition = $.mobile.getMaxScrollForTransition || defau
 
 		// By default, we prevent changePage requests when the fromPage and toPage
 		// are the same element, but folks that generate content manually/dynamically
-		// and reuse registrationViews want to be able to transition to the same page. To allow
+		// and reuse pages want to be able to transition to the same page. To allow
 		// this, they will need to change the default value of allowSamePageTransition
 		// to true, *OR*, pass it in as an option when they manually call changePage().
 		// It should be noted that our default transition animations assume that the
@@ -4735,7 +4735,7 @@ $.mobile.getMaxScrollForTransition = $.mobile.getMaxScrollForTransition || defau
 		role: undefined, // By default we rely on the role defined by the @data-role attribute.
 		duplicateCachedPage: undefined,
 		pageContainer: undefined,
-		showLoadMsg: true, //loading message shows by default when registrationViews are being fetched during changePage
+		showLoadMsg: true, //loading message shows by default when pages are being fetched during changePage
 		dataUrl: undefined,
 		fromPage: undefined,
 		allowSamePageTransition: false
@@ -4796,7 +4796,7 @@ $.mobile.getMaxScrollForTransition = $.mobile.getMaxScrollForTransition || defau
 
 			// If no action is specified, browsers default to using the
 			// URL of the document containing the form. Since we dynamically
-			// pull in registrationViews from external documents, the form should submit
+			// pull in pages from external documents, the form should submit
 			// to the URL for the source document of the page containing
 			// the form.
 			if ( !url ) {
@@ -4975,10 +4975,10 @@ $.mobile.getMaxScrollForTransition = $.mobile.getMaxScrollForTransition || defau
 				return;
 			}
 
-			// XXX_jblas: Ideally links to application registrationViews should be specified as
+			// XXX_jblas: Ideally links to application pages should be specified as
 			//            an url to the application document with a hash that is either
 			//            the site relative path or id to the page. But some of the
-			//            internal code that dynamically generates sub-registrationViews for nested
+			//            internal code that dynamically generates sub-pages for nested
 			//            lists and select dialogs, just write a hash in the link they
 			//            create. This means the actual URL path is based on whatever
 			//            the current value of the base tag is at the time this code
@@ -5034,7 +5034,7 @@ $.mobile.getMaxScrollForTransition = $.mobile.getMaxScrollForTransition || defau
 			event.preventDefault();
 		});
 
-		//prefetch registrationViews when anchors with data-prefetch are encountered
+		//prefetch pages when anchors with data-prefetch are encountered
 		$.mobile.document.delegate( ".ui-page", "pageshow.prefetch", function() {
 			var urls = [];
 			$( this ).find( "a:jqmData(prefetch)" ).each(function() {
@@ -5401,7 +5401,7 @@ $.widget( "mobile.dialog", $.mobile.widget, {
 		if ( this._isCloseable ) {
 			this._isCloseable = false;
 			// If the hash listening is enabled and there is at least one preceding history
-			// entry it's ok to go back. Initial registrationViews with the dialog hash state are an example
+			// entry it's ok to go back. Initial pages with the dialog hash state are an example
 			// where the stack check is necessary
 			if ( $.mobile.hashListeningEnabled && hist.activeIndex > 0 ) {
 				$.mobile.back();
@@ -5483,7 +5483,7 @@ $.mobile.document.bind( "pagecreate", function( e ) {
 				rightbtn = rightbtn || $headeranchors.eq( 1 ).addClass( "ui-btn-right" ).length;
 			}
 
-			// Auto-add back btn on registrationViews beyond first view
+			// Auto-add back btn on pages beyond first view
 			if ( o.addBackBtn &&
 				role === "header" &&
 				$( ".ui-page" ).length > 1 &&
@@ -6520,7 +6520,7 @@ $.widget( "mobile.listview", $.mobile.widget, $.extend( {
 
 		}).listview();
 
-		// on pagehide, remove any nested registrationViews along with the parent page, as long as they aren't active
+		// on pagehide, remove any nested pages along with the parent page, as long as they aren't active
 		// and aren't embedded
 		if ( hasSubPages &&
 			parentPage.is( ":jqmData(external-page='true')" ) &&
@@ -6549,7 +6549,7 @@ $.widget( "mobile.listview", $.mobile.widget, $.extend( {
 		}
 	},
 
-	// TODO sort out a better way to track sub registrationViews of the listview this is brittle
+	// TODO sort out a better way to track sub pages of the listview this is brittle
 	childPages: function() {
 		var parentUrl = this.parentPage.jqmData( "url" );
 
@@ -6729,7 +6729,7 @@ $.widget( "mobile.textinput", $.mobile.widget, {
 				keyupTimeout = setTimeout( self._keyup, keyupTimeoutBuffer );
 			});
 
-			// binding to pagechange here ensures that for registrationViews loaded via
+			// binding to pagechange here ensures that for pages loaded via
 			// ajax the height is recalculated without user input
 			this._on( true, $.mobile.document, { "pagechange": "_keyup" });
 
@@ -9447,7 +9447,7 @@ $.mobile.document.bind( "pagecreate create", function( e )  {
 					//
 					// TODO extremely confusing dependency on the open method where the pagehide.remove
 					// bindings are stripped to prevent the parent page from disappearing. The way
-					// we're keeping registrationViews in the DOM right now sucks
+					// we're keeping pages in the DOM right now sucks
 					//
 					// rebind the page remove that was unbound in the open function
 					// to allow for the parent page removal from actions other than the use
@@ -11091,15 +11091,15 @@ $.mobile.document.delegate( ":jqmData(role='table')", "tablecreate refresh", fun
 	setTimeout( hideRenderingClass, 5000 );
 
 	$.extend( $.mobile, {
-		// find and enhance the registrationViews in the dom and transition to the first page.
+		// find and enhance the pages in the dom and transition to the first page.
 		initializePage: function() {
-			// find present registrationViews
+			// find present pages
 			var path = $.mobile.path,
 				$pages = $( ":jqmData(role='page'), :jqmData(role='dialog')" ),
 				hash = path.stripHash( path.stripQueryParams(path.parseLocation().hash) ),
 				hashPage = document.getElementById( hash );
 
-			// if no registrationViews are found, create one with body's inner html
+			// if no pages are found, create one with body's inner html
 			if ( !$pages.length ) {
 				$pages = $( "body" ).wrapInner( "<div data-" + $.mobile.ns + "role='page'></div>" ).children( 0 );
 			}

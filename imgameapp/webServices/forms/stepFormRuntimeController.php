@@ -5,6 +5,7 @@
 //  
 // -----------------------------------------------------------------------------
 if (!isset($root_path)) { $root_path = $_SERVER['DOCUMENT_ROOT']; }
+include_once $root_path.'/domainSpecific/mySqlObject.php';
 require_once($root_path.'/helpers/forms/class.stepFormRuntimeController.php');
 $messageType = $_GET['messageType'];
 $content = isset($_GET['content']) ? $_GET['content'] : NULL;
@@ -13,7 +14,8 @@ $jType = $_GET['jType'];
 $formType = $_GET['formType'];
     
   function processMessage($messageType, $exptId, $formType, $jType, $content) {
-    $stepFormRuntimeController = new stepFormRuntimeController($exptId, $formType, $jType);
+    global $igrtSqli;
+    $stepFormRuntimeController = new stepFormRuntimeController($igrtSqli, $exptId, $formType, $jType);
     $msg = null;
     $pptNo = null;
     $stage = null;

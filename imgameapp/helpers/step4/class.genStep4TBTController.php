@@ -34,7 +34,7 @@ class genTBTstep4Controller {
     $html = '';
     $getJcntQry = sprintf("SELECT DISTINCT(s4jNo) FROM wt_Step3shuffles WHERE exptId='%s' AND jType='%s' ORDER BY s4jNo ASC", $exptId, $jType);
     $jResult = $igrtSqli->query($getJcntQry);
-    if ($jResult) {
+    if ($jResult->num_rows>0) {
       while ($jRow = $jResult->fetch_object()) {
         $s4jNo = $jRow->s4jNo;
         $jNoLabel = $s4jNo + 1;
@@ -202,8 +202,8 @@ class genTBTstep4Controller {
     $anyExptIdqry = sprintf("SELECT * FROM wt_TBTStep4datasets WHERE exptId='%s' AND s4jNo='%s' AND rated=0", $this->exptId, $s4jNo);
     //echo $anyExptIdqry.PHP_EOL;
     $anyResult = $igrtSqli->query($anyExptIdqry);
-    //echo $anyResult->affected_rows.' '.$igrtSqli->affected_rows.PHP_EOL;
-    if ($igrtSqli->affected_rows !=0 ) {
+    //echo $anyResult->num_rows.' '.$igrtSqli->num_rows.PHP_EOL;
+    if ($igrtSqli->num_rows !=0 ) {
       // get min ig no for this exptId
       $getMinIGqry = sprintf("SELECT MIN(jNo) AS jNo FROM wt_TBTStep4datasets WHERE s4jNo='%s' AND exptId='%s' AND rated=0",
         $s4jNo, $this->exptId);

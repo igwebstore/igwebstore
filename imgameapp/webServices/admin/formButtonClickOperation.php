@@ -25,7 +25,7 @@ $formType = $_GET['formType'];
     $result = $igrtSqli->query($qry);
     $optionList = [];
     $newOptionList = [];
-    if ($result) {
+    if ($result->num_rows>0) {
       while ($row = $result->fetch_object()) {
         array_push($optionList, ['label'=>$row->label, 'isEligibleResponse'=>$row->isEligibleResponse, 'jType'=>$row->jType]);
       }
@@ -65,7 +65,7 @@ $formType = $_GET['formType'];
     $result = $igrtSqli->query($qry);
     $optionList = [];
     $newOptionList = [];
-    if ($result) {
+    if ($result->num_rows>0) {
       while ($row = $result->fetch_object()) {
         array_push($optionList, ['label'=>$row->label]);
       }
@@ -119,7 +119,7 @@ $formType = $_GET['formType'];
     $result = $igrtSqli->query($qry);
     $questionList = [];
     $newQuestionList = [];
-    if ($result) {
+    if ($result->num_rows>0) {
       while ($row = $result->fetch_object()) {
         array_push($questionList, ['label'=>$row->qLabel, 'qMandatory'=>$row->qMandatory, 'qAccordion'=>$row->qAccordion, 'qType'=>$row->qType]);
       }

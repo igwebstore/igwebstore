@@ -77,7 +77,7 @@ class classicViewModel {
 //        $reverseHistory=array();
 //        $sql=sprintf("SELECT * FROM dataClassic WHERE id='%s' ORDER BY insertDT ASC",$uid);
 //        $result=$igrtSqli->query($sql);
-//        if ($igrtSqli->affected_rows > 0) {
+//        if ($igrtSqli->num_rows > 0) {
 //            while ($row=$result->fetch_object()) {
 //                $det=array(
 //                    'jQuestion'=>$row->jQ,

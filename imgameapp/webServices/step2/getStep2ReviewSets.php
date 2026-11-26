@@ -309,7 +309,7 @@ include_once $root_path.'/helpers/models/class.experimentModel.php';
         //echo $turnQry;
         $turnResult = $igrtSqli->query($turnQry);
         $wordCnt = 0;
-        //echo $igrtSqli->affected_rows;
+        //echo $igrtSqli->num_rows;
         while ($turnRow = $turnResult->fetch_object()) {
           //echo $turnRow->qNo;
           $qNo = $turnRow->qNo;

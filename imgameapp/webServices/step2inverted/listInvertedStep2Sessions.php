@@ -14,7 +14,7 @@ if ($permissions>=128) {
   $html = "<p>No completed inverted step2 sessions exist.</p>";
   $uniqueIdQry = "SELECT DISTINCT(exptId) AS exptId FROM dataSTEP2inverted ORDER BY exptId DESC";
   $uidResult = $igrtSqli->query($uniqueIdQry);
-  if ($uidResult->numd_rows > 0) {
+  if ($uidResult->num_rows > 0) {
     $html = "<table><tr><th>expt #</th><th>title</th><th>Odd</th><th>Even</th></tr>";
     while ($uidRow = $uidResult->fetch_object()) {
       $title = 'not defined';
@@ -24,7 +24,7 @@ if ($permissions>=128) {
 //      // get expt title, and attach to day, session etc
       $titleSql = sprintf("SELECT * FROM igExperiments WHERE exptId='%s'", $exptId);
       $titleResult = $igrtSqli->query($titleSql);
-      if ($titleResult) {
+      if ($titleResult->num_rows>0) {
         $titleRow = $titleResult->fetch_object();
         $title = $titleRow->title;
         $oddS1Label = $titleRow->oddS1Label;
@@ -45,12 +45,12 @@ if ($permissions>=128) {
         $rawOddCnt = 0;
         $rawOddDayQry = "SELECT DISTINCT(dayNo) FROM dataSTEP2inverted WHERE exptId=$exptId AND jType=1";
         $rawOddDayResult = $igrtSqli->query($rawOddDayQry);
-        if ($rawOddDayResult) {
+        if ($rawOddDayResult->num_rows>0) {
           $rawOddDayRow = $rawOddDayResult->fetch_object();
           $dayNo = $rawOddDayRow->dayNo;
           $rawOddSessionQry = "SELECT DISTINCT(sessionNo) FROM dataSTEP2inverted WHERE exptId=$exptId AND jType=1 AND dayNo=$dayNo";
           $rawOddSessionResult = $igrtSqli->query($rawOddSessionQry);
-          if ($rawOddSessionResult) {
+          if ($rawOddSessionResult->num_rows>0) {
             $rawOddSessionRow = $rawOddSessionResult->fetch_object();
             $sessionNo = $rawOddSessionRow->sessionNo;
             $oddJCntQry = "SELECT DISTINCT(jNo) FROM dataSTEP2inverted WHERE exptId=$exptId AND jType=1 AND dayNo=$dayNo AND sessionNo=$sessionNo";

@@ -101,7 +101,7 @@ class allocationViewModel {
       case 2 : { 
         $jQry = sprintf("SELECT * FROM sysallocs_Step2JudgeMappings WHERE uid='%s' AND exptId='%s' AND jType='%s' AND jNo='%s' AND dayNo='%s' AND sessionNo='%s'", $uid, $exptId, $jType, $jNo, $dayNo, $sessionNo);
         $jResult = $this->igrtSqli->query($jQry);
-        if ($this->igrtSqli->affected_rows == 0) {
+        if ($this->igrtSqli->num_rows == 0) {
           // doesn't exist so create
           $insertQry = sprintf("INSERT INTO sysallocs_Step2JudgeMappings (uid, jType, jNo, exptId, dayNo, sessionNo) VALUES('%s', '%s', '%s', '%s', '%s', '%s')", $uid, $jType, $jNo, $exptId, $dayNo, $sessionNo );
           $this->igrtSqli->query($insertQry);
@@ -110,7 +110,7 @@ class allocationViewModel {
           $qQry = sprintf("SELECT * FROM md_dataStep1reviewed WHERE exptId='%s' AND jType='%s' AND jNo='%s' AND dayNo='%s' AND sessionNo='%s' AND canUse='1'", $exptId, $numJType, $jNo, $dayNo, $sessionNo);
           $qResult = $this->igrtSqli->query($qQry);
           //return $qQry;
-          if ($this->igrtSqli->affected_rows > 0) {
+          if ($this->igrtSqli->num_rows > 0) {
             $qCnt = 0;
             while ($dataRow = $qResult->fetch_object()) {
               ++$qCnt;
@@ -123,7 +123,7 @@ class allocationViewModel {
             $newValue = $qCnt;
             $existingValue = 0;
             $cqCntResult = $this->igrtSqli->query($cqCntQry);
-            if ($this->igrtSqli->affected_rows > 0) {
+            if ($this->igrtSqli->num_rows > 0) {
               $cqCntRow = $cqCntResult->fetch_object();
               $existingValue = $cqCntRow->totalQ;
             }

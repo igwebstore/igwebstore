@@ -1157,7 +1157,7 @@ class Step1Controller {
     global $igrtSqli;
     $sqlQry_title=sprintf("SELECT * FROM igExperiments WHERE exptId='%s'",$exptId);
     $titleResults=$igrtSqli->query($sqlQry_title);
-    if ($titleResults) {
+    if ($titleResults->num_rows>0) {
       $row=$titleResults->fetch_object();
       return $row->title;
     }

@@ -846,7 +846,7 @@ class experimentModel {
     global $igrtSqli;
     $sqlQry_Likert=sprintf("SELECT * FROM edLabels WHERE exptId='%s' AND whichLikert='0'", $this->exptId);
     $likertResults=$igrtSqli->query($sqlQry_Likert);
-    if ($likertResults) {
+    if ($likertResults->num_rows>0) {
       $i=0;
       while ($row=$likertResults->fetch_object()) {
         $labelDetail=array(
@@ -863,7 +863,7 @@ class experimentModel {
     global $igrtSqli;
     $sqlQry_FinalLikert=sprintf("SELECT * FROM edLabels WHERE exptId='%s' AND whichLikert='2';",$this->exptId);
     $finalLikertResults=$igrtSqli->query($sqlQry_FinalLikert);
-    if ($finalLikertResults) {
+    if ($finalLikertResults->num_rows>0) {
       $i=0;
       while ($row=$finalLikertResults->fetch_object()) {
         $labelDetail=array(
@@ -880,28 +880,28 @@ class experimentModel {
     global $igrtSqli;
     $sql = sprintf("SELECT * FROM edAlignmentControlLabels WHERE exptId='%s' AND step=1 ORDER BY displayOrder ASC", $this->exptId);
     $result = $igrtSqli->query($sql);
-    if ($result) {
+    if ($result->num_rows>0) {
       while ($row = $result->fetch_object()) {
         array_push($this->s1AlignmentCategoryLabels, $row->label);
       }
     }
     $sql = sprintf("SELECT * FROM edAlignmentControlLabels WHERE exptId='%s' AND step=2 ORDER BY displayOrder ASC", $this->exptId);
     $result = $igrtSqli->query($sql);
-    if ($result) {
+    if ($result->num_rows>0) {
       while ($row = $result->fetch_object()) {
         array_push($this->s2AlignmentCategoryLabels, $row->label);
       }
     }
     $sql = sprintf("SELECT * FROM edAlignmentControlLabels WHERE exptId='%s' AND step=3 ORDER BY displayOrder ASC", $this->exptId);
     $result = $igrtSqli->query($sql);
-    if ($result) {
+    if ($result->num_rows>0) {
       while ($row = $result->fetch_object()) {
         array_push($this->is2AlignmentCategoryLabels, $row->label);
       }
     }
     $sql = sprintf("SELECT * FROM edAlignmentControlLabels WHERE exptId='%s' AND step=4 ORDER BY displayOrder ASC", $this->exptId);
     $result = $igrtSqli->query($sql);
-    if ($result) {
+    if ($result->num_rows>0) {
       while ($row = $result->fetch_object()) {
         array_push($this->s4AlignmentCategoryLabels, $row->label);
       }
@@ -916,7 +916,7 @@ class experimentModel {
       // get sessions for each day
       $sqlQry_sessions=sprintf("SELECT * FROM edSessions WHERE exptId='%s' AND dayNo='%s';",$this->exptId,$dayNo);
       $sessionResult=$igrtSqli->query($sqlQry_sessions);
-      if ($sessionResult) {
+      if ($sessionResult->num_rows>0) {
         while ($row=$sessionResult->fetch_object()) {
           $sessionDetail=array(
             'dayNo'=>$row->dayNo,
@@ -947,7 +947,7 @@ class experimentModel {
         . "AND edExptStatic_refactor.exptId=edContentDefs_refactor.exptId", $this->exptId);
     //$sqlQry_exptDetails=sprintf("SELECT igExperiments.* FROM igExperiments WHERE igExperiments.exptId='%s'", $this->exptId);
     $edResult = $igrtSqli->query($sqlQry_exptDetails);
-    if ($edResult) {
+    if ($edResult->num_rows>0) {
       $row = $edResult->fetch_object();
       $this->ownerId = $row->ownerId;
       $this->title = $row->title;

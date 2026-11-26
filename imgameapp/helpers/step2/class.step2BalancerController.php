@@ -26,7 +26,7 @@ class step2BalancerController {
     
     $sql = sprintf("SELECT * FROM igExperiments WHERE exptId='%s' AND %s=1", $exptId, $flagName);
     $sqlResult = $this->igrtSqli->query($sql);
-    if ($this->igrtSqli->affected_rows > 0) {
+    if ($this->igrtSqli->num_rows > 0) {
       // re-configuration
       $clearQry = sprintf("DELETE FROM wt_Step2Balancer WHERE exptId='%s' AND jType='%s'", $exptId, $jType);
       $this->igrtSqli->query($clearQry);
@@ -78,7 +78,7 @@ class step2BalancerController {
     $this->igrtSqli->query($updateQry);
     $respMaxRowExists = sprintf("SELECT * FROM wt_Step2BalancerRespMax WHERE exptId='%s'", $exptId);
     $this->igrtSqli->query($respMaxRowExists);
-    if ($this->igrtSqli->affected_rows > 0) {
+    if ($this->igrtSqli->num_rows > 0) {
       // update
       if ($jType == 0) {
         $updateQry = sprintf("UPDATE wt_Step2BalancerRespMax SET evenRespMax='%s' WHERE exptId='%s'", $respNo, $exptId);
@@ -113,7 +113,7 @@ class step2BalancerController {
       $hasEven = isset($s2ds['hasEven']) ? $s2ds['hasEven'] : 0;
       $titleSql = sprintf("SELECT * FROM igExperiments WHERE exptId='%s'", $exptId);
       $titleResult = $this->igrtSqli->query($titleSql);
-      if ($this->igrtSqli->affected_rows > 0) {
+      if ($this->igrtSqli->num_rows > 0) {
         $titleRow = $titleResult->fetch_object();
         $title = $titleRow->title;
         $oddS1Label = $titleRow->oddS1Label;
@@ -124,7 +124,7 @@ class step2BalancerController {
       }
     $s2RespQry = "SELECT * FROM wt_Step2BalancerRespMax WHERE exptId=$exptId";
     $s2RespResult = $this->igrtSqli->query($s2RespQry);
-    if ($this->igrtSqli->affected_rows > 0) {
+    if ($this->igrtSqli->num_rows > 0) {
       $s2RespRow = $s2RespResult->fetch_object();
       $oddRespMax = $s2RespRow->oddRespMax;
       $evenRespMax = $s2RespRow->evenRespMax;
@@ -255,7 +255,7 @@ class step2BalancerController {
     $s1ReviewedQry = "SELECT DISTINCT(exptId) FROM edSessions WHERE step1EvenMarked=1 OR step1OddMarked=1 ORDER BY exptId DESC";
     $s1ReviewedResult = $this->igrtSqli->query($s1ReviewedQry);
     $s1ReviewedArray = array();
-    if ($this->igrtSqli->affected_rows > 0) {
+    if ($this->igrtSqli->num_rows > 0) {
       while ($s1ReviewedRow = $s1ReviewedResult->fetch_object()) {
         $exptId = $s1ReviewedRow->exptId;
         array_push($s1ReviewedArray, array('exptId' => $exptId));
@@ -268,7 +268,7 @@ class step2BalancerController {
     $s2StatusQry = "SELECT DISTINCT(t1.exptId) AS exptId FROM edSessions AS t1 JOIN wt_Step2Balancer AS t2 "
         . "WHERE (t1.step1EvenMarked=1 OR t1.step1OddMarked=1) AND t2.respCount>0 AND t1.exptId=t2.exptId ORDER BY exptId DESC";
     $s2StatusResult = $this->igrtSqli->query($s2StatusQry);
-    if ($this->igrtSqli->affected_rows > 0) {
+    if ($this->igrtSqli->num_rows > 0) {
       while ($s2StatusRow = $s2StatusResult->fetch_object()) {
         $exptId = $s2StatusRow->exptId;
         array_push($s2StartedArray, array('exptId' => $exptId));
@@ -281,7 +281,7 @@ class step2BalancerController {
     $s2StatusQry = "SELECT DISTINCT(t1.exptId) AS exptId FROM edSessions AS t1 JOIN wt_Step2Balancer AS t2 "
         . "WHERE (t1.step1EvenMarked=1 OR t1.step1OddMarked=1) AND t2.respCount=0 AND t1.exptId=t2.exptId ORDER BY exptId DESC";
     $s2StatusResult = $this->igrtSqli->query($s2StatusQry);
-    if ($this->igrtSqli->affected_rows > 0) {
+    if ($this->igrtSqli->num_rows > 0) {
       while ($s2StatusRow = $s2StatusResult->fetch_object()) {
         $exptId = $s2StatusRow->exptId;
         array_push($s2ConfiguredArray, array('exptId' => $exptId));
@@ -299,10 +299,10 @@ class step2BalancerController {
       if ($isStarted == false) {
         $e_qry = sprintf("SELECT * FROM wt_Step2Balancer WHERE exptId='%s' AND jType=0", $es['exptId']);
         $this->igrtSqli->query($e_qry);
-        $hasEven = ($this->igrtSqli->affected_rows > 0) ? 1 : 0;
+        $hasEven = ($this->igrtSqli->num_rows > 0) ? 1 : 0;
         $o_qry = sprintf("SELECT * FROM wt_Step2Balancer WHERE exptId='%s' AND jType=1", $es['exptId']);
         $this->igrtSqli->query($o_qry);
-        $hasOdd = ($this->igrtSqli->affected_rows > 0) ? 1 : 0;
+        $hasOdd = ($this->igrtSqli->num_rows > 0) ? 1 : 0;
         array_push($s2NotStartedArray, array('exptId' => $es['exptId'], 'hasOdd' => $hasOdd, 'hasEven' => $hasEven));
       }
     }
@@ -337,7 +337,7 @@ class step2BalancerController {
         . "exptId='%s' AND dayNo='%s' AND sessionNo='%s'",
         $exptId, $dayNo, $sessionNo);
     $discardResult = $this->igrtSqli->query($discardQry);
-    if ($this->igrtSqli->affected_rows > 0) {
+    if ($this->igrtSqli->num_rows > 0) {
       $discardRow = $discardResult->fetch_object();
       $discardValue = ($jType == 0) ? $discardRow->evenDiscards : $discardRow->oddDiscards;
     }

@@ -19,12 +19,12 @@ class step4JudgeNumberController {
     global $igrtSqli;
     $s4jCountQry = sprintf("SELECT * FROM wt_Step4JudgeCounts WHERE exptId='%s'", $exptId);
     $s4jCountResult = $igrtSqli->query($s4jCountQry);
-    if ($igrtSqli->affected_rows > 0) {
+    if ($igrtSqli->num_rows > 0) {
       $s4jCountRow = $s4jCountResult->fetch_object();
       $this->s4jCount = ($jType == 0) ? $s4jCountRow->evenS4JudgeCount : $s4jCountRow->oddS4JudgeCount;
       $s4NoStartedCountQry = sprintf("SELECT * FROM wt_Step4judgeStatus WHERE exptId='%s' AND jType='%s' AND started=1", $exptId, $jType);
       $s4startedResult = $igrtSqli->query($s4NoStartedCountQry);
-      $this->s4startedCount = $igrtSqli->affected_rows;
+      $this->s4startedCount = $igrtSqli->num_rows;
       return ($this->s4startedCount == $this->s4jCount) ? 1 : 0;
     }
     else {

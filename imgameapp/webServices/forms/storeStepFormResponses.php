@@ -17,7 +17,7 @@ $jsonTblName = sprintf("zz_json_%s", $exptId);
 $tblExistsQry = sprintf("show tables like '%s'", $jsonTblName);
 //echo $tblExistsQry;
 $tr = $igrtSqli->query($tblExistsQry);
-if ($tr) {
+if ($tr->num_rows>0) {
   $createTblQry = sprintf("CREATE TABLE `%s` (
     `id` int(11) NOT NULL AUTO_INCREMENT,
     `chrono` datetime DEFAULT NULL,
@@ -34,14 +34,14 @@ else {
   // is from older ko-js form or newer jqm form
   $checkColQry = sprintf("SHOW COLUMNS FROM `%s` LIKE 'isJQM'", $jsonTblName);
   $checkColResult = $igrtSqli->query($checkColQry);
-  if ($checkColResult) {
+  if ($checkColResult->num_rows>0) {
     $alterQry = sprintf("ALTER TABLE `%s` ADD COLUMN `isJQM` INT(4) NULL DEFAULT 0 AFTER `formType`", $jsonTblName);
     $igrtSqli->query($alterQry);
   }
   // check that the table has the newer column to for restartUID to make it easier to pull out data later
   $checkColQry = sprintf("SHOW COLUMNS FROM `%s` LIKE 'restartUID'", $jsonTblName);
   $checkColResult = $igrtSqli->query($checkColQry);
-  if ($checkColResult) {
+  if ($checkColResult->num_rows>0) {
     $alterQry = sprintf("ALTER TABLE `%s` ADD COLUMN `restartUID` INT(11) NULL DEFAULT -1 AFTER `isJQM`", $jsonTblName);
     $igrtSqli->query($alterQry);
   }

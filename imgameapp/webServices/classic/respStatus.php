@@ -41,7 +41,7 @@ if (!isset($root_path)) { $root_path = $_SERVER['DOCUMENT_ROOT']; }
   );
   $dataResult=$igrtSqli->query($sqlData);
   //echo $sqlData;
-  if ($dataResult) {
+  if ($dataResult->num_rows>0) {
     $dataRow=$dataResult->fetch_object();
     $respData['recentQ']=$dataRow->jQ;
     if ($respData['role']=="NP") {
@@ -82,7 +82,7 @@ if (!isset($root_path)) { $root_path = $_SERVER['DOCUMENT_ROOT']; }
     $respData['groupNo']
   );
   $historyResult=$igrtSqli->query($sqlHistory);
-  if ($historyResult) {
+  if ($historyResult->num_rows>0) {
     while ($row=$historyResult->fetch_object()) {
       if ($respData['role']=="NP") {
         $det = array('resp'=>$row->npA,'jQ'=>$row->jQ);                    

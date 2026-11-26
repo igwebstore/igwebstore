@@ -4931,7 +4931,7 @@ $.widget( "mobile.page", {
 		},
 
 		_showLoading: function( delay, theme, msg, textonly ) {
-			// This configurable timeout allows cached registrationViews a brief
+			// This configurable timeout allows cached pages a brief
 			// delay to load without showing a message
 			if ( this._loadMsg ) {
 				return;
@@ -4980,7 +4980,7 @@ $.widget( "mobile.page", {
 					"</div>" );
 			}
 
-			// TODO tagging a page with external to make sure that embedded registrationViews aren't
+			// TODO tagging a page with external to make sure that embedded pages aren't
 			// removed by the various page handling code is bad. Having page handling code
 			// in many places is bad. Solutions post 1.0
 			page.attr( "data-" + this._getNs() + "url", this._createDataUrl( fileUrl ) )
@@ -5534,7 +5534,7 @@ $.widget( "mobile.page", {
 
 			// By default, we prevent changePage requests when the fromPage and toPage
 			// are the same element, but folks that generate content
-			// manually/dynamically and reuse registrationViews want to be able to transition to
+			// manually/dynamically and reuse pages want to be able to transition to
 			// the same page. To allow this, they will need to change the default
 			// value of allowSamePageTransition to true, *OR*, pass it in as an
 			// option when they manually call changePage(). It should be noted that
@@ -5852,7 +5852,7 @@ $.widget( "mobile.page", {
 		role: undefined, // By default we rely on the role defined by the @data-role attribute.
 		duplicateCachedPage: undefined,
 		pageContainer: undefined,
-		showLoadMsg: true, //loading message shows by default when registrationViews are being fetched during changePage
+		showLoadMsg: true, //loading message shows by default when pages are being fetched during changePage
 		dataUrl: undefined,
 		fromPage: undefined,
 		allowSamePageTransition: false
@@ -5877,7 +5877,7 @@ $.widget( "mobile.page", {
 
 			// If no action is specified, browsers default to using the
 			// URL of the document containing the form. Since we dynamically
-			// pull in registrationViews from external documents, the form should submit
+			// pull in pages from external documents, the form should submit
 			// to the URL for the source document of the page containing
 			// the form.
 			if ( !url ) {
@@ -6074,10 +6074,10 @@ $.widget( "mobile.page", {
 				return;
 			}
 
-			// XXX_jblas: Ideally links to application registrationViews should be specified as
+			// XXX_jblas: Ideally links to application pages should be specified as
 			//            an url to the application document with a hash that is either
 			//            the site relative path or id to the page. But some of the
-			//            internal code that dynamically generates sub-registrationViews for nested
+			//            internal code that dynamically generates sub-pages for nested
 			//            lists and select dialogs, just write a hash in the link they
 			//            create. This means the actual URL path is based on whatever
 			//            the current value of the base tag is at the time this code
@@ -6134,7 +6134,7 @@ $.widget( "mobile.page", {
 			event.preventDefault();
 		});
 
-		//prefetch registrationViews when anchors with data-prefetch are encountered
+		//prefetch pages when anchors with data-prefetch are encountered
 		$.mobile.document.delegate( ".ui-page", "pageshow.prefetch", function() {
 			var urls = [];
 			$( this ).find( "a:jqmData(prefetch)" ).each(function() {
@@ -6811,7 +6811,7 @@ $.widget( "mobile.dialog", {
 		if ( this._isCloseable ) {
 			this._isCloseable = false;
 			// If the hash listening is enabled and there is at least one preceding history
-			// entry it's ok to go back. Initial registrationViews with the dialog hash state are an example
+			// entry it's ok to go back. Initial pages with the dialog hash state are an example
 			// where the stack check is necessary
 			if ( $.mobile.hashListeningEnabled && hist.activeIndex > 0 ) {
 				$.mobile.back();
@@ -11342,7 +11342,7 @@ $.widget( "mobile.selectmenu", $.mobile.selectmenu, {
 		//
 		// TODO extremely confusing dependency on the open method where the pagehide.remove
 		// bindings are stripped to prevent the parent page from disappearing. The way
-		// we're keeping registrationViews in the DOM right now sucks
+		// we're keeping pages in the DOM right now sucks
 		//
 		// rebind the page remove that was unbound in the open function
 		// to allow for the parent page removal from actions other than the use
@@ -12359,7 +12359,7 @@ $.widget( "mobile.controlgroup", $.extend( {
 					// This must also be a header toolbar
 					this.role === "header" &&
 
-					// There must be multiple registrationViews in the DOM
+					// There must be multiple pages in the DOM
 					$( ".ui-page" ).length > 1 &&
 					( this.page ?
 
@@ -15319,16 +15319,16 @@ $.widget( "ui.tabs", {
 	setTimeout( hideRenderingClass, 5000 );
 
 	$.extend( $.mobile, {
-		// find and enhance the registrationViews in the dom and transition to the first page.
+		// find and enhance the pages in the dom and transition to the first page.
 		initializePage: function() {
-			// find present registrationViews
+			// find present pages
 			var path = $.mobile.path,
 				$pages = $( ":jqmData(role='page'), :jqmData(role='dialog')" ),
 				hash = path.stripHash( path.stripQueryParams(path.parseLocation().hash) ),
 				theLocation = $.mobile.path.parseLocation(),
 				hashPage = hash ? document.getElementById( hash ) : undefined;
 
-			// if no registrationViews are found, create one with body's inner html
+			// if no pages are found, create one with body's inner html
 			if ( !$pages.length ) {
 				$pages = $( "body" ).wrapInner( "<div data-" + $.mobile.ns + "role='page'></div>" ).children( 0 );
 			}

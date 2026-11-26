@@ -63,14 +63,14 @@ function getPptNo($jNo, $respId) {
   global $igrtSqli;
   $getQry = sprintf("SELECT * FROM wt_s2Mapping_Wroclaw WHERE respId='%s'", $respId);
   $getResult = $igrtSqli->query($getQry);
-  if ($igrtSqli->affected_rows > 0) {
+  if ($igrtSqli->num_rows > 0) {
     $getRow = $getResult->fetch_object();
     return $getRow->pptNo;
   }
   else {
     $maxQuery = sprintf("SELECT MAX(pptNo) AS pptNo FROM wt_s2Mapping_Wroclaw WHERE igNo='%s'", $jNo);
     $maxResult = $igrtSqli->query($maxQuery);
-    if ($igrtSqli->affected_rows > 0) {
+    if ($igrtSqli->num_rows > 0) {
       $maxRow = $maxResult->fetch_object();
       $pptNo = $maxRow->pptNo + 1;
       $insertPpt = sprintf("INSERT INTO wt_s2Mapping_Wroclaw (igNo, respId, pptNo) VALUES('%s','%s','%s')",
@@ -129,7 +129,7 @@ function processData($s2store) {
       332, $dayNo, $sessionNo, $jNo, ($qNo+1), $pptNo);
     //echo $checkQry.'<br />';
     $igrtSqli->query($checkQry);
-    if ($igrtSqli->affected_rows == 0) {
+    if ($igrtSqli->num_rows == 0) {
       $insert = sprintf("INSERT INTO dataSTEP2 (exptId, dayNo, sessionNo, jType, jNo, qNo, pptNo, reply) "
         . "VALUES ('332', '%s', '%s', '0', '%s', '%s', '%s', '%s')",
         $dayNo, $sessionNo, $jNo, ($qNo + 1), $pptNo, $igrtSqli->real_escape_string($reply));

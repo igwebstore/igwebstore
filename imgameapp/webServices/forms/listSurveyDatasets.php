@@ -59,7 +59,7 @@ if ($permissions>=128) {
   }
   $exptListQry = sprintf("SELECT * FROM igExperiments WHERE inActive='%s' AND injectedFlag='%s' ORDER BY exptId DESC", $inActive, $injectedFlag );
   $exptListResult = $igrtSqli->query($exptListQry);
-  if ($exptListResult) {
+  if ($exptListResult->num_rows>0) {
     while ($exptListRow = $exptListResult->fetch_object()) {
       $dsItem = array(
         'exptId' => $exptListRow->exptId,
@@ -75,7 +75,7 @@ if ($permissions>=128) {
       $hasData = false;
       $getJsonQry = sprintf("SELECT formType FROM %s", $tblName);
       $jsonResult = $igrtSqli->query($getJsonQry);
-      if ($jsonResult) {
+      if ($jsonResult->num_rows>0) {
         $hasData = true;
         while ($jsonRow = $jsonResult->fetch_object()) {
           $formType = $jsonRow->formType;

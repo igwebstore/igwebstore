@@ -7,51 +7,51 @@
 ini_set('display_errors', 'On');
 error_reporting(E_ALL);
 if (!isset($root_path)) { $root_path = $_SERVER['DOCUMENT_ROOT']; }
-include_once $root_path.'/helpers/models/class.experimentModel.php';
-include_once $root_path.'/domainSpecific/mySqlObject.php';
+//include_once $root_path.'/helpers/models/class.experimentModel.php';
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
 class stepFormsHandler {
+  private $formDef;
   private $controlItems = array();
   private $judgeTypes = [];
+  
   private $igrtSqli;
   private $tabIndex = 1;
-  private $formName;
-  public $formDef;  // public during debug
   private $formType;
   private $exptId;
   private $jType;
   
 // <editor-fold defaultstate="collapsed" desc=" get, save & create definition functions">
 
-  function getEligibilityQ() {
+  function getEligibilityQ($useEligibilityQ) {
     $qSql = sprintf("SELECT * FROM fdStepFormsEligibilityQuestions WHERE exptId='%s' AND formType='%s'", $this->exptId, $this->formType);
     $qResult = $this->igrtSqli->query($qSql);
     $qRow = $qResult->fetch_object();
     $qDef = [];
     if (isset($qRow)) {
+      $optionsDef = array(
+        'options' => $this->getEligibilityQOptions(),
+        //'qOptionsAreExclusive' => $qRow->qOptionsAreExclusive,
+      );
 	    $qDef=array(
 		    'qType' => $qRow->qType,
 		    'qLabel' => $qRow->qLabel,
-		    'qAccordionClosed' => $qRow->qAccordionClosed,
-		    'qOptionsAccordionClosed' => $qRow->qOptionsAccordionClosed,
-		    'qValidationMsg' => $qRow->qValidationMsg,
 		    'qContinuousSliderMax' => $qRow->qContinuousSliderMax,
-		    'qOptionsAreExclusive' => $qRow->qOptionsAreExclusive,
 		    'qNonEligibleMsg' => $qRow->qNonEligibleMsg,
-		    'qUseJTypeSelector' => $qRow->qUseJTypeSelector,
-		    'options' => array()
+		    'qUseJTypeSelector' => $qRow->qUseJTypeSelector == 1,
+        'useEligibilityQ' => $useEligibilityQ == 1,
+		    'optionsDef' => $optionsDef
 	    );
     }
     else {
     	$this->createDefaultEligibilityQuestion();
-    	$qDef = $this->getEligibilityQ();
+    	$qDef = $this->getEligibilityQ($useEligibilityQ);
     }
-    $qDef['options'] = $this->getEligibilityQOptions();
     return $qDef;
   }
 
   function getEligibilityQOptions() {
-	  // get associated options (always at least one option for eligibility Q )
+	  // get associated options (always at least 2 options for eligibility Q )
 	  $eqOptions=[];
 	  $eqoSql=sprintf("SELECT * FROM fdStepFormsEligibilityQuestionsOptions WHERE exptId='%s' AND formType='%s' ORDER BY displayOrder ASC", $this->exptId, $this->formType);
 	  $eqoResult = $this->igrtSqli->query($eqoSql);
@@ -59,8 +59,9 @@ class stepFormsHandler {
 		  $eqoDef=array(
 			  'id'=>$eqoRow->displayOrder,
 			  'label'=>$eqoRow->label,
-//			  'isEligibleResponse'=>$eqoRow->isEligibleResponse, // this is implicit in jType 0 ,1 being S1 interrogator types and 2 being ineligible
-			  'jType' => $eqoRow->jType
+			  'isEligibleResponse'=>$eqoRow->isEligibleResponse == 1, // this field is used if not JTypeSelector, otherwise jType is used
+			  'jType' => $eqoRow->jType,
+        'jTypeLabel' => $this->judgeTypes[$eqoRow->jType]['label']
 		  );
 		  array_push($eqOptions, $eqoDef);
 	  }
@@ -70,148 +71,104 @@ class stepFormsHandler {
 	  }
 		return $eqOptions;
   }
+  
+  function getQuestionOptions($pNo, $qNo) {
+    // get associated options (always at least one option even for no-option qTypes )
+    $cbPairs = array();
+    $sqlCb = sprintf("SELECT * FROM fdStepFormsQuestionsOptions WHERE exptId='%s' AND formType='%s' AND qNo='%s' "
+      . "AND pNo='%s' ORDER BY displayOrder ASC", $this->exptId, $this->formType, $qNo, $pNo);
+    $cbResult = $this->igrtSqli->query($sqlCb);
+    if ($cbResult->num_rows > 20)
+    {
+      for ($i=0; $i<20; $i++) {
+        $cbRow = $cbResult->fetch_object();
+        $cbPairDef = array('id' => $cbRow->displayOrder, 'label' => $cbRow->label);
+        array_push($cbPairs, $cbPairDef);
+      }
+    }
+    else {
+      while ($cbRow = $cbResult->fetch_object()) {
+        $cbPairDef = array('id' => $cbRow->displayOrder, 'label' => $cbRow->label);
+        array_push($cbPairs, $cbPairDef);
+      }
+    }
+    return $cbPairs;
+  }
 
   function getFormPageQuestions($pNo) {
     $qList = [];
     $qSql = sprintf("SELECT * FROM fdStepFormsQuestions WHERE exptId='%s' AND formType='%s' "
                   . "AND pNo='%s' ORDER BY qNo ASC", $this->exptId, $this->formType, $pNo);
     $qResult = $this->igrtSqli->query($qSql);
-    while ($qRow = $qResult->fetch_object()) {
-      $qDef=array(
-        'pNo' => $pNo,
-        'qNo' => $qRow->qNo,
-        'qType' => $qRow->qType,
-        'qLabel' => $qRow->qLabel,
-        'qAccordionClosed' => $qRow->qAccordionClosed,
-        'optionsAccordionClosed' => $qRow->optionsAccordionClosed,
-        'qContingentValue' => $qRow->qContingentValue,
-        'qContingentText' => $this->formDef['eligibilityQ']['options'][$qRow->qContingentValue]['label'],
-        'qValidationMsg' => $qRow->qValidationMsg,
-        'qContinuousSliderMax' => $qRow->qContinuousSliderMax,
-        'qMandatory' => $qRow->qMandatory,
-        'qGridTarget' => $qRow->qGridTarget,
-        'qGridInstruction' => $qRow->qGridInstruction,
-        'gridColumns' => array(),
-        'gridRows' => array(),
-        'options' => array()
-      );
-      // get associated options (always at least one option even for no-option qTypes )
-      $cbPairs=array();
-      $sqlCb=sprintf("SELECT * FROM fdStepFormsQuestionsOptions WHERE exptId='%s' AND formType='%s' AND qNo='%s' "
-                . "AND pNo='%s' ORDER BY displayOrder ASC", $this->exptId, $this->formType, $qDef['qNo'], $pNo);
-      $cbResult = $this->igrtSqli->query($sqlCb);
-      while ($cbRow = $cbResult->fetch_object()) {
-        $cbPairDef=array('id'=>$cbRow->displayOrder, 'label'=>$cbRow->label);
-        array_push($cbPairs, $cbPairDef);
-      }
-      $qDef['options'] = $cbPairs;
-      // get grid options (or default 5 col and 3 row in case grid selected later)
-      $gridColItems = array();
-      $gridSql = sprintf("SELECT * FROM fdStepFormsGridValues WHERE exptId='%s' AND formType='%s' AND qNo='%s' "
-                . "AND pNo='%s' AND isRowLabel=0 ORDER BY colValue ASC", $this->exptId, $this->formType, $qDef['qNo'], $pNo);
-      $gridResult = $this->igrtSqli->query($gridSql);
-      if ($this->igrtSqli->affected_rows > 0) {
-        while ($gridRow = $gridResult->fetch_object()) {
-          $gridItems = array('colValue' => $gridRow->colValue, 'label' => $gridRow->label );
-          array_push($gridColItems, $gridItems);
-        }        
-      }
-      else {
-        for ($i=0; $i<6; $i++) {
-          $gridItems = array('colValue' => $i, 'label' => "$i" );
-          array_push($gridColItems, $gridItems);          
-        }
-      }
-      $qDef['gridColumns'] = $gridColItems;
-      
-      $gridRowItems = array();
-      $gridSql = sprintf("SELECT * FROM fdStepFormsGridValues WHERE exptId='%s' AND formType='%s' AND qNo='%s' "
-                . "AND pNo='%s' AND isRowLabel=1 ORDER BY rowNo ASC", $this->exptId, $this->formType, $qDef['qNo'], $pNo);
-      $gridResult = $this->igrtSqli->query($gridSql);
-      if ($this->igrtSqli->affected_rows > 0) {
-        while ($gridRow = $gridResult->fetch_object()) {
-          $gridItems = array('rowNo' => $gridRow->rowNo, 'label' => $gridRow->label );
-          array_push($gridRowItems, $gridItems);
-        }        
-      }
-      else {
-        for ($i=0; $i<3; $i++) {
-          $gridItems = array('rowNo' => $i, 'label' => "$i" );
-          array_push($gridRowItems, $gridItems);          
-        }
-      }
-      $qDef['gridRows'] = $gridRowItems;
-      array_push($qList, $qDef);
-    }
-    if (count($qList) == 0) {
-    	$this->createDefaultPageQuestion();
-    	$qList = $this->getFormPageQuestions($pNo);
-    }
-    return $qList;
-  }
-
-  function getFormPageFilterQuestionOptions($pNo) {
-  	$fqOptions = [];
-  	$fqoSql = sprintf("SELECT * FROM fdStepFormsPageFilterQuestionsOptions WHERE exptId='%s' AND formType='%s' AND pNo='%s'", $this->exptId, $this->formType, $pNo);
-  	$fqoResult = $this->igrtSqli->query($fqoSql);
-  	while ($fqoRow = $fqoResult->fetch_object()) {
-  		$fqOptionDef = array('responseMapping'=>$fqoRow->responseMapping, 'fqoLabel'=>$fqoRow->fqoLabel);
-  		array_push($fqOptions, $fqOptionDef);
-	  }
-	  if (count($fqOptions) == 0) {
-	  	$this->createDefaultFilterQuestionOptions($pNo);
-	  	$fqOptions = $this->getFormPageFilterQuestionOptions($pNo);
-	  }
-  	return $fqOptions;
-  }
-
-  function getFormPageFilterQuestion($pNo) {
-    $fqSql = sprintf("SELECT * FROM fdStepFormsPageFilterQuestions WHERE exptId='%s' AND formType='%s' AND pNo='%s'", $this->exptId, $this->formType, $pNo);
-    $fqResult = $this->igrtSqli->query($fqSql);
-    $fqRow = $fqResult->fetch_object();
-    if (is_null($fqRow)) {
-    	$this->createDefaultFilterQuestion($pNo);
-	    $fqDef = $this->getFormPageFilterQuestion($pNo);
+    if($qResult->num_rows == 0) {
+      $this->createDefaultPageQuestion($pNo);
+      $qList = $this->getFormPageQuestions($pNo);
     }
     else {
-    	$fqDef = [
-    		'fqType' => $fqRow->fqType,
-		    'fqLabel' => $fqRow->fqLabel,
-		    'fqOptionsAccordionClosed' => $fqRow->fqOptionsAccordionClosed,
-		    'fqAccordionClosed' => $fqRow->fqAccordionClosed,
-		    'fqOptions' => $this->getFormPageFilterQuestionOptions($pNo)
-	    ];
+      // check for spurious saves
+      if ($qResult->num_rows > 30) {
+        $this->createDefaultPageQuestion($pNo);
+        $qList = $this->getFormPageQuestions($pNo);
+      }
+      else {
+        for ($i=0; $i<$qResult->num_rows; $i++) {
+          
+          $qRow = $qResult->fetch_object();
+          $qDef = array(
+            'pNo' => $pNo,
+            'qNo' => $qRow->qNo,
+            'qType' => $qRow->qType,
+            'qLabel' => $qRow->qLabel,
+            'qFilterValue' => $qRow->qFilterValue,
+            'qIsFilter' => $qRow->qIsFilter == 1,
+            'qValidationMsg' => $qRow->qValidationMsg,
+            'qContinuousSliderMax' => $qRow->qContinuousSliderMax,
+            'qMandatory' => $qRow->qMandatory == 1,
+            'options' => $this->getQuestionOptions($pNo, $qRow->qNo)
+          );
+           array_push($qList, $qDef);
+        }
+      }
     }
-    return $fqDef;
-  }
     
+    
+    return $qList;
+  }
+  
   function getFormPageDefinitions() {
     $pageDefList = array();
     $pageSql = sprintf("SELECT * FROM fdStepFormsPages WHERE exptId='%s' AND formType='%s' ORDER BY pNo ASC", $this->exptId, $this->formType);
     $pageResult = $this->igrtSqli->query($pageSql);
-    while ($pageRow = $pageResult->fetch_object()) {
-      $pNo = $pageRow->pNo;
-      $pageDef = array(
-        'pNo' => $pNo,
-        'pageTitle' => $pageRow->pageTitle,
-        'pageInst' => $pageRow->pageInst,
-        'pageButtonLabel' => $pageRow->pageButtonLabel,
-        'contingentPage' => $pageRow->contingentPage,
-        'useFilter' => $pageRow->useFilter,
-        'pageAccordionClosed' => $pageRow->pageAccordionClosed,
-        'contingentValue' => $pageRow->contingentValue,
-        'contingentText' => $pageRow->contingentText,
-        'ignorePage' => $pageRow->ignorePage,
-        //'q0isFilter' => $pageRow->useFilter,
-        'jType' => $pageRow->jType, // jType is mainly used if form does not have eligibilityQ (post forms especially, as jType is selected from pre-form which does have )
-	      //'filterQuestion' => $this->getFormPageFilterQuestion($pNo),
-        'questions' => $this->getFormPageQuestions($pNo)
-      );
-      array_push($pageDefList, $pageDef);
+    if ($pageResult->num_rows == 0) {
+      $this->createDefaultPage();
+      $pageDefList = $this->getFormPageDefinitions();
     }
-    if (count($pageDefList) == 0) {
-			$this->createDefaultPage();
-			$pageDefList = $this->getFormPageDefinitions();
+    else {
+      // check for bad save where multiple spurious pages created.
+      if ($pageResult->num_rows > 50) {
+        $this->createDefaultPage();
+        $pageDefList = $this->getFormPageDefinitions();
+      }
+      else {
+        for ($i=0;$i<$pageResult->num_rows; $i++) {
+          $pageRow = $pageResult->fetch_object();
+          $pNo = $pageRow->pNo;
+          $pageDef = array(
+            'pNo' => $pNo,
+            'pageTitle' => $pageRow->pageTitle,
+            'pageInst' => $pageRow->pageInst,
+            'pageButtonLabel' => $pageRow->pageButtonLabel,
+            'contingentPage' => $pageRow->contingentPage == 1,
+            'contingentValue' => $pageRow->contingentValue,
+            'contingentText' => $pageRow->contingentText,
+            'ignorePage' => $pageRow->ignorePage == 1,
+            'jType' => $pageRow->jType, // jType is mainly used if form does not have eligibilityQ (post forms especially, as jType is selected from pre-form which does have )
+            'questions' => $this->getFormPageQuestions($pNo)
+          );
+          array_push($pageDefList, $pageDef);
+        }
+      }
+      
     }
     return $pageDefList;
   }
@@ -231,52 +188,75 @@ class stepFormsHandler {
   	return $cnt;
   }
   
+  private function getFormTypes() {
+    $getTypeSql = "SELECT * FROM fdStepFormsNames ORDER BY formType ASC";
+    $getTypeResult = $this->igrtSqli->query($getTypeSql);
+    $retArray = [];
+    while ($getTypeRow = $getTypeResult->fetch_object()) {
+      array_push($retArray, $getTypeRow);
+    }
+    return $retArray;
+  }
+  
+  private function getFormName($id) {
+    $formDefs = $this->getFormTypes();
+    foreach ($formDefs as $formDef) {
+      if ($formDef->formType == $id ) { return $formDef->formName; }
+    }
+  }
+  
+  
   function getForm() {
     $form = array();
+    $form['igControlTypes'] = $this->controlItems;
     // check a definition is in  for this expt and type, create if not
     $sql=sprintf("SELECT * FROM fdStepForms WHERE exptId='%s' AND formType='%s'", $this->exptId, $this->formType);
     $result=$this->igrtSqli->query($sql);
-    if ($this->igrtSqli->affected_rows > 0) {
+    if ($result->num_rows == 1) {
       $row=$result->fetch_object();
       $form['judgeTypeOptions'] = $this->judgeTypes;
       $form['exptId'] = $this->exptId;
       $form['formType'] = $this->formType;
-      $form['useEligibilityQ'] = $row->useEligibilityQ;
+      $form['formName'] = $this->getFormName($this->formType);
       $form['currentFocusControlId'] = $row->currentFocusControlId;
       $form['formTitle'] = $row->formTitle;
-      $form['formInst'] = $row->formInst;  
-      $form['useIntroPage'] = $row->useIntroPage;
-      $form['introPageTitle'] = $row->introPageTitle;
-      $form['introPageMessage'] = $row->introPageMessage;
-      $form['introPageButtonLabel'] = $row->introPageButtonLabel;
-      $form['finalMsg'] = $row->finalMsg;
-      $form['finalButtonLabel'] = $row->finalButtonLabel;
-      //$form['introAccordionClosed'] = $row->introAccordionClosed;
-	    $form['finalAccordionClosed'] = $row->finalAccordionClosed;
-	    $form['recruitmentAccordionClosed'] = $row->recruitmentAccordionClosed;
-      $form['startPageAccordionClosed'] = $row->startPageAccordionClosed;
-	    $form['recruitmentAccordionClosed'] = $row->recruitmentAccordionClosed;
-	    $form['startPageAccordionClosed'] = $row->startPageAccordionClosed;
-	    $form['pagesAccordionClosed'] = $row->pagesAccordionClosed;
+      $form['formInst'] = $row->formInst;
+      
+      $recruitmentSection = array();
+      $recruitmentSection['useRecruitmentCode'] = $row->useRecruitmentCode == 1;
+      $recruitmentSection['recruitmentCodeLabel'] = $row->recruitmentCodeLabel;
+      $recruitmentSection['recruitmentCodeMessage'] = $row->recruitmentCodeMessage;
+      $recruitmentSection['recruitmentCodeYesLabel'] = $row->recruitmentCodeOptionLabel;
+      $recruitmentSection['recruitmentCodeNoLabel'] = $row->nullRecruitmentCodeOptionLabel;
+      
+      $introPage = array();
+      $introPage['recruitmentSection'] = $recruitmentSection;
+      $introPage['useIntroPage'] = $row->useIntroPage == 1;
+      $introPage['introPageTitle'] = $row->introPageTitle;
+      $introPage['introPageMessage'] = $row->introPageMessage;
+      $introPage['introPageButtonLabel'] = $row->introPageButtonLabel;
+      $introPage['eligibilityQ'] = $this->getEligibilityQ($row->useEligibilityQ);
+      $form['introPage'] = $introPage;
+      
+      $finalPage = array();
+      $finalPage['finalMsg'] = $row->finalMsg;
+      $finalPage['finalButtonLabel'] = $row->finalButtonLabel;
+      $finalPage['useFinalPage'] = $row->useFinalPage == 1;
+      $form['finalPage'] = $finalPage;
+      
+      
       $form['definitionComplete'] = $row->definitionComplete;
-      $form['useRecruitmentCode'] = $row->useRecruitmentCode;
-      $form['allowNullRecruitmentCode'] = $row->allowNullRecruitmentCode;
-      $form['recruitmentCodeLabel'] = $row->recruitmentCodeLabel;
-      $form['recruitmentCodeMessage'] = $row->recruitmentCodeMessage;
-      $form['recruitmentCodeYesLabel'] = $row->recruitmentCodeOptionLabel;
-      $form['recruitmentCodeNoLabel'] = $row->nullRecruitmentCodeOptionLabel;
-      $form['eligibilityQ'] = $this->getEligibilityQ();       
-      $form['registrationViews'] = $this->getFormPageDefinitions();
+      $this->formDef = $form; // need this instantiated for getFormPageDefinitions - clumsy
+      $form['pages'] = $this->getFormPageDefinitions();
       $form['cntActivePages'] = [];
-	    array_push($form['cntActivePages'], $this->getActivePageCount("0", $form['registrationViews']));
-	    array_push($form['cntActivePages'], $this->getActivePageCount("1", $form['registrationViews']));
- 	    $form['useFinalPage'] = $row->useFinalPage;
+      array_push($form['cntActivePages'], $this->getActivePageCount("0", $form['pages']));
+      array_push($form['cntActivePages'], $this->getActivePageCount("1", $form['pages']));
       return $form;
     }
     else {
-      return $this->makeDefaultForm();
+      return $this->makeDefaultForm();  // builds default values in db and then reloads
     }
-  } 
+  }
        
   function saveForm() {
     // wipe out existing form 
@@ -323,8 +303,8 @@ class stepFormsHandler {
       $this->igrtSqli->query($makeEligibilityOption);
     }
     // now do each page
-    for ($pageNo=0; $pageNo<count($this->formDef['registrationViews']); $pageNo++) {
-      $pageDef = $this->formDef['registrationViews'][$pageNo];
+    for ($pageNo=0; $pageNo<count($this->formDef['pages']); $pageNo++) {
+      $pageDef = $this->formDef['pages'][$pageNo];
       $makePage = sprintf("INSERT INTO fdStepFormsPages (exptId, formType, pNo, pageTitle, pageInst, pageButtonLabel, "
         . "contingentPage, pageAccordionClosed, contingentValue, contingentText, ignorePage, q0isFilter, jType) "
         . "VALUES('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s' ,'%s', '%s', '%s', '%s', '%s')",
@@ -369,109 +349,85 @@ class stepFormsHandler {
   }
 
   function makeDefaultForm() {
-    $cleanPages = sprintf("DELETE FROM fdStepFormsPages WHERE exptId='%s' AND formType='%s'", $this->exptId, $this->formType);
-    $this->igrtSqli->query($cleanPages);
-    //echo $cleanPages;
-    $cleanEligibilityQuestions = sprintf("DELETE FROM fdStepFormsEligibilityQuestions WHERE exptId='%s' AND formType='%s'", $this->exptId, $this->formType);
-    $this->igrtSqli->query($cleanEligibilityQuestions);
-    $cleanQuestions = sprintf("DELETE FROM fdStepFormsQuestions WHERE exptId='%s' AND formType='%s'", $this->exptId, $this->formType);
-    $this->igrtSqli->query($cleanQuestions);
-    $cleanOptions = sprintf("DELETE FROM fdStepFormsQuestionsOptions WHERE exptId='%s' AND formType='%s'", $this->exptId, $this->formType);
-    $this->igrtSqli->query($cleanOptions);
-    $cleanEligibilityOptions = sprintf("DELETE FROM fdStepFormsEligibilityQuestionsOptions WHERE exptId='%s' AND formType='%s'", $this->exptId, $this->formType);
-    $this->igrtSqli->query($cleanEligibilityOptions);
-    // make basic form with minimum registrationViews, questions and options
-    $sqlMake = sprintf("INSERT INTO fdStepForms (exptId, formType, formTitle, formInst, finalMsg, finalButtonLabel, introAccordionClosed, finalAccordionClosed, "
+    // make basic form with minimum pages, questions and options
+    $sqlMake = sprintf("INSERT INTO fdStepForms (exptId, formType, formTitle, formInst, finalMsg, finalButtonLabel, "
       . "useIntroPage, introPageTitle, introPageMessage, introPageButtonLabel, useEligibilityQ) "
-      . "VALUES('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s')", 
-      $this->exptId, $this->formType, "insert title here", "insert instructions here", "insert final message here", "done", "0", "0",
+      . "VALUES('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s')",
+      $this->exptId, $this->formType, "insert title here", "insert instructions here", "insert final message here", "done",
       "0", "insert intro page title here", "insert intro page message here", "next", "0");
     $this->igrtSqli->query($sqlMake);
-    // create a default initial page 
-//    $createInitialPage = sprintf("INSERT INTO fdStepFormsPages (exptId, formType, pNo, pageTitle, pageInst, pageButtonLabel, contingentPage, pageAccordionClosed, contingentValue, contingentText, q0isFilter, ignorePage)
-//      VALUES('%s', '%s', '0', 'new page title', 'new page instruction', 'next', '0', '0', '-1', '', '1', '0')", $this->exptId, $this->formType);
-//      $this->igrtSqli->query($createInitialPage);
-    //echo $createInitialPage;
 	  $this->createDefaultPage();
-    $this->createDefaultFilterQuestion(0);
     $this->createDefaultEligibilityQuestion();
-    return $this->getForm();    
+    return $this->getForm();
+  }
+  
+  function createDefaultPageQuestionOption($pNo) {
+    $cleanOptions = sprintf("DELETE FROM fdStepFormsQuestionsOptions where exptId='%s' and formType='%s' and pNo='%s'",$this->exptId, $this->formType, $pNo );
+    $this->igrtSqli->query($cleanOptions);
+    $insertOption = sprintf("INSERT INTO fdStepFormsQuestionsOptions (exptId, formType, pNo, qNo, label, displayOrder) VALUES ('%s','%s','%s','%s','%s','%s')",
+      $this->exptId, $this->formType, $pNo, 0, 'first option', 0);
+    $this->igrtSqli->query($insertOption);
   }
 
-  function createDefaultPageQuestion() {
-	  $insertQuestion = sprintf("INSERT INTO fdStepFormsQuestions (exptId, formType, pNo, qNo, qType, qLabel, qAccordionClosed, qValidationMsg, qContingentValue, qContinuousSliderMax, qMandatory, qGridTarget, qGridInstruction, optionsAccordionClosed) 
-			VALUES ('%s', '%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s')",
-		  $this->exptId, $this->formType, 0, 0, 3, 'question label', 1, 'this question must be answered', 0, 100, 0, 0, 'grid instruction', 1);
+  function createDefaultPageQuestion($pNo) {
+    $cleanQuestions = sprintf("DELETE FROM fdStepFormsQuestions WHERE exptId=$this->exptId AND formType=$this->formType AND pNo=$pNo");
+    $this->igrtSqli->query($cleanQuestions);
+	  $insertQuestion = sprintf("INSERT INTO fdStepFormsQuestions (exptId, formType, pNo, qNo, qType, qLabel, qValidationMsg,  qContinuousSliderMax, qMandatory, qGridTarget, qGridInstruction)
+			VALUES ('%s', '%s','%s','%s','%s','%s','%s','%s','%s','%s','%s')",
+		  $this->exptId, $this->formType, $pNo, 0, 6, 'question label', 'this question must be answered', 100, 0, 0, 'grid instruction');
 	  $this->igrtSqli->query($insertQuestion);
-	  $insertOption = sprintf("INSERT INTO fdStepFormsQuestionsOptions (exptId, formType, pNo, qNo, label, displayOrder) VALUES ('%s','%s','%s','%s','%s','%s')",
-		  $this->exptId, $this->formType, 0, 0, 'first option', 0);
-	  $this->igrtSqli->query($insertOption);
+    $this->createDefaultPageQuestionOption($pNo);
   }
 
   function createDefaultPage() {
-		$insertPage = sprintf("INSERT INTO fdStepFormsPages (exptId, formType, pNo, pageTitle, pageInst, pageButtonLabel, contingentPage, useFilter, pageAccordionClosed, contingentValue, contingentText, ignorePage, jType) 
-			VALUES ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s')",
-			$this->exptId, $this->formType, 0, 'page title', 'page instruction', 'button label', 0, 0, 1, 0, '', 0, 0);
+    $cleanPages = sprintf("DELETE FROM fdStepFormsPages WHERE exptId='%s' AND formType='%s'", $this->exptId, $this->formType);
+    $this->igrtSqli->query($cleanPages);
+    $insertPage = sprintf("INSERT INTO fdStepFormsPages (exptId, formType, pNo, pageTitle, pageInst, pageButtonLabel, contingentPage, useFilter, contingentValue, contingentText, ignorePage, jType)
+			VALUES ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s')",
+			$this->exptId, $this->formType, 0, 'page title', 'page instruction', 'button label', 0, 1, 0, '', 0, 0);
 		$this->igrtSqli->query($insertPage);
+    $this->createDefaultPageQuestion(0);
   }
 
   function createDefaultEligibilityQuestion() {
+    $cleanEligibilityQuestions = sprintf("DELETE FROM fdStepFormsEligibilityQuestions WHERE exptId='%s' AND formType='%s'", $this->exptId, $this->formType);
+    $this->igrtSqli->query($cleanEligibilityQuestions);
     $insertSql = sprintf("INSERT INTO fdStepFormsEligibilityQuestions (exptId, formType, qType, qLabel, qValidationMsg, qOptionsAreExclusive, qNonEligibleMsg) "
       . "VALUES ('%s', '%s', '5', 'eligibility question instruction', 'eligibility validation message', '0', 'non-eligible message')",
       $this->exptId, $this->formType);
-    $this->igrtSqli->query($insertSql);  
+    $this->igrtSqli->query($insertSql);
+    $this->createDefaultEligibilityQuestionOptions();
   }
 
   function createDefaultEligibilityQuestionOptions() {
-	  $makeOption = sprintf("INSERT INTO fdStepFormsEligibilityQuestionsOptions (exptId, formType, label, displayOrder, isEligibleResponse, jType)"
-		  . "VALUES ('%s', '%s', '%s', '%s', '%s', '0')",
-		  $this->exptId, $this->formType, 'first eligibility option', 0, 0);
-	  $this->igrtSqli->query($makeOption);
-  }
- 
-  function createDefaultFilterQuestion($pNo) {
-    $insertSql = sprintf("INSERT INTO fdStepFormsPageFilterQuestions (exptId, formType, pNo, fqType, fqLabel, fqOptionsAccordionClosed, filterMapping) "
-      . "VALUES('%s', '%s', '%s', '%s', '%s', '%s', '%s')",
-      $this->exptId, $this->formType, $pNo, 5, 'question instruction',  1, 0);
-    $this->igrtSqli->query($insertSql);
-  }
-
-  function createDefaultFilterQuestionOptions($pNo) {
-	  $makeOption = sprintf("INSERT INTO fdStepFormsPageFilterQuestionsOptions (exptId, formType, pNo, fqoLabel, responseMapping) "
-		  . "VALUES ('%s', '%s', '%s', '%s', '%s')",
-		  $this->exptId, $this->formType, $pNo, 'first option', 0);
-	  $this->igrtSqli->query($makeOption);
+    $cleanEligibilityOptions = sprintf("DELETE FROM fdStepFormsEligibilityQuestionsOptions WHERE exptId='%s' AND formType='%s'", $this->exptId, $this->formType);
+    $this->igrtSqli->query($cleanEligibilityOptions);
+    // eligibility questions require 2 options if being used as a jType selector.
+    $makeOption = sprintf("INSERT INTO fdStepFormsEligibilityQuestionsOptions (exptId, formType, label, displayOrder, isEligibleResponse, jType)"
+      . "VALUES ('%s', '%s', '%s', '%s', '%s', '%s')",
+      $this->exptId, $this->formType, 'first eligibility option', 0, 0, 0);
+    $this->igrtSqli->query($makeOption);
+    $makeOption = sprintf("INSERT INTO fdStepFormsEligibilityQuestionsOptions (exptId, formType, label, displayOrder, isEligibleResponse, jType)"
+      . "VALUES ('%s', '%s', '%s', '%s', '%s', '%s')",
+      $this->exptId, $this->formType, 'second eligibility option', 1, 1, 1);
+    $this->igrtSqli->query($makeOption);
   }
 
 // </editor-fold>
   
 // <editor-fold defaultstate="collapsed" desc=" helpers and debug">
 
-  function getFormType() {
-    $getTypeSql = sprintf("SELECT * FROM fdStepFormsNames WHERE formName='%s'", $this->formName);
-    $getTypeResult = $this->igrtSqli->query($getTypeSql);
-    if ($this->igrtSqli->affected_rows > 0) {
-      $getTypeRow = $getTypeResult->fetch_object();
-      return $getTypeRow->formType;      
-    }
-    else {
-      return -1;
-    }      
-  }
-  
-  function getFormName() {
-    $getTypeSql = sprintf("SELECT * FROM fdStepFormsNames WHERE formType='%s'", $this->formType);
-//    return $getTypeSql;
-    $getTypeResult = $this->igrtSqli->query($getTypeSql);
-    if ($this->igrtSqli->affected_rows > 0) {
-      $getTypeRow = $getTypeResult->fetch_object();
-      return $getTypeRow->formName;      
-    }
-    else {
-      return 'unset';
-    }          
-  }
-  
+//  function getFormType() {
+//    $getTypeSql = sprintf("SELECT * FROM fdStepFormsNames WHERE formName='%s'", $this->formName);
+//    $getTypeResult = $this->igrtSqli->query($getTypeSql);
+//    if ($this->igrtSqli->affected_rows > 0) {
+//      $getTypeRow = $getTypeResult->fetch_object();
+//      return $getTypeRow->formType;
+//    }
+//    else {
+//      return -1;
+//    }
+//  }
   function getControlItems() {
     // get all control values  
     $controlQry = "SELECT * FROM igControlTypes";
@@ -486,33 +442,36 @@ class stepFormsHandler {
       }
     }
   }
-
   function getJudgeTypes() {
 		$eModel = new experimentModel($this->exptId);
-	  array_push($this->judgeTypes, ['id' => -1, 'label' => 'no contingency required']);
 	  array_push($this->judgeTypes, ['id' => 0, 'label' => $eModel->evenS1Label]);
 	  array_push($this->judgeTypes, ['id' => 1, 'label' => $eModel->oddS1Label]);
+    array_push($this->judgeTypes, ['id' => 255, 'label' => 'no contingency required']);
+    
   }
+  public function setJType($jType) {
+    $this->jType = $jType;
+  }
+  private function getPageCnt() {
+    $result = $this->igrtSqli->query(sprintf("select * from fdStepFormsPages where exptId='%s' and formType='%s'", $this->exptId, $this->formType));
+    return $result->num_rows;
+  }
+  private function getPageQuestionCnt($pageNo) {
+    $result = $this->igrtSqli->query(sprintf("select * from fdStepFormsQuestions where exptId='%s' and formType='%s' and pNo='%s'", $this->exptId, $this->formType, $pageNo));
+    return $result->num_rows;
+  }
+
 
 // </editor-fold>
 
 // <editor-fold defaultstate="collapsed" desc=" constructor">
   
-  public function setJType($jType) {
-  	$this->jType = $jType;
-  }
-
-  function __construct($exptId = null, $formType = null) {
-    if (isset($GLOBALS['exptId'])) { $this->exptId = $GLOBALS['exptId']; }
-    if (isset($GLOBALS['formName'])) { $this->formName = $GLOBALS['formName']; }
-    if (isset($GLOBALS['igrtSqli'])) { $this->igrtSqli = $GLOBALS['igrtSqli']; }
-
-	  $this->exptId = isset($GLOBALS['exptId']) ? $GLOBALS['exptId'] : $exptId;
-	  $this->formType = isset($GLOBALS['formType']) ? $GLOBALS['formType'] : $formType;
-	  $this->formName = isset($GLOBALS['formName']) ? $GLOBALS['formName'] : $this->getFormName();
-	  $this->igrtSqli = $GLOBALS['igrtSqli'];
+  
+  function __construct($_igrtSqli, $_exptId, $_formType) {
+    $this->igrtSqli = $_igrtSqli;
+    $this->exptId = $_exptId;
+    $this->formType = $_formType;
     $this->tabIndex = 1;   //
-    //$this->formType = $this->getFormType();
     $this->getControlItems();
     $this->getJudgeTypes();
   }

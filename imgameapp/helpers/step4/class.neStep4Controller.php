@@ -44,7 +44,7 @@ class step4Controller {
     $html = '';
     $getJcntQry = sprintf("SELECT DISTINCT(s4jNo) FROM wt_Step3shuffles WHERE exptId='%s' AND jType='%s' ORDER BY s4jNo ASC", $exptId, $jType);
     $jResult = $igrtSqli->query($getJcntQry);
-    if ($jResult) {
+    if ($jResult->num_rows>0) {
       while ($jRow = $jResult->fetch_object()) {
         $s4jNo = $jRow->s4jNo;
         $jNoLabel = $s4jNo + 1;
@@ -112,7 +112,7 @@ class step4Controller {
     global $igrtSqli;
     $getSQL = "SELECT * FROM edExptStatic_refactor WHERE exptId=$exptId";
     $getResult = $igrtSqli->query($getSQL);
-    if ($getResult) {
+    if ($getResult->num_rows>0) {
       $row = $getResult->fetch_object();
       $retValue = $row->step4PostForm;
       return $retValue;
@@ -203,7 +203,7 @@ class step4Controller {
     $getS4Qry = sprintf("SELECT * FROM ne_Step4datasets WHERE exptId='%s' AND jType='%s' AND s4jNo='%s' AND rated=0 ORDER BY actualJNo ASC", $exptId, $jType, $s4jNo);
     //return $getS4Qry;
     $getS4Result = $igrtSqli->query($getS4Qry);
-    if ($getS4Result) {
+    if ($getS4Result->num_rows>0) {
       $shuffleRow = $getS4Result->fetch_object();
       $actualJNo = $shuffleRow->actualJNo;  
       $s3respNo1 = $shuffleRow->s3respNo1;    
@@ -242,7 +242,7 @@ class step4Controller {
     global $igrtSqli;
     $getS4Qry = sprintf("SELECT * FROM wt_Step4datasets WHERE exptId='%s' AND jType='%s' AND s4jNo='%s' AND rated=0 ORDER BY actualJNo ASC", $exptId, $jType, $s4jNo);
     $getS4Result = $igrtSqli->query($getS4Qry);
-    if ($getS4Result) {
+    if ($getS4Result->num_rows>0) {
       $shuffleRow = $getS4Result->fetch_object();
       $dayNo = $shuffleRow->dayNo;
       $sessionNo = $shuffleRow->sessionNo;
@@ -263,7 +263,7 @@ class step4Controller {
           $exptId, $jType, $actualJNo, $respNo, $s3respNo);
       echo $maxQNoQry;
       $maxQNoResult = $igrtSqli->query($maxQNoQry);
-      if ($maxQNoResult) {
+      if ($maxQNoResult->num_rows>0) {
         $maxQNoRow = $maxQNoResult->fetch_object();
         $qNo = $maxQNoRow->maxQNo + 1;
       }
@@ -307,7 +307,7 @@ class step4Controller {
         . "exptId='%s' AND jType='%s' AND actualJNo='%s' AND respNo='%s' AND qNo='%s' AND canUse=1", 
         $exptId, $jType, $actualJNo, $respNo, $qNo);
     $turnResult = $igrtSqli->query($getTurnQry);
-    if ($turnResult) {
+    if ($turnResult->num_rows>0) {
       $turnRow = $turnResult->fetch_object();
       $q = $turnRow->q;
       $pr = $turnRow->reply;
@@ -315,7 +315,7 @@ class step4Controller {
       // igExperiments->useEvenInvertedS2, igExperiments->useOddInvertedS2
       $useInvertedS2Qry = sprintf("SELECT * FROM edExptStatic_refactor WHERE exptId='%s'", $exptId);
       $useInvertedS2Result = $igrtSqli->query($useInvertedS2Qry);
-      if ($useInvertedS2Result) {
+      if ($useInvertedS2Result->num_rows>0) {
         $useInvertedS2Row = $useInvertedS2Result->fetch_object();
         $useInvertedS2 = $jType == 0 ? $useInvertedS2Row->useEvenInvertedS2 : $useInvertedS2Row->useOddInvertedS2;
       }
@@ -374,7 +374,7 @@ class step4Controller {
     global $igrtSqli;
     $getS4Qry = sprintf("SELECT * FROM ne_Step4datasets WHERE exptId='%s' AND jType='%s' AND s4jNo='%s' AND rated=0 ORDER BY actualJNo ASC", $exptId, $jType, $s4jNo);
     $getS4Result = $igrtSqli->query($getS4Qry);
-    if ($getS4Result) {
+    if ($getS4Result->num_rows>0) {
       $shuffleRow = $getS4Result->fetch_object();
       $dayNo = $shuffleRow->dayNo;
       $sessionNo = $shuffleRow->sessionNo;
@@ -544,7 +544,7 @@ class step4Controller {
     $html = '';
     $getS4Qry = sprintf("SELECT * FROM wt_Step3shuffles WHERE exptId='%s' AND jType='%s' AND s4jNo='%s' ORDER BY s4jNo ASC, datasetPtr ASC", $exptId, $jType, $s4jNo);
     $getS4Result = $igrtSqli->query($getS4Qry);
-    if ($getS4Result) {
+    if ($getS4Result->num_rows>0) {
       $html.= "<div class=\"judgeDetails\">";
       while ($shuffleRow = $getS4Result->fetch_object()) {
         $dayNo = $shuffleRow->dayNo;

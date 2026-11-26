@@ -86,7 +86,7 @@ if (!isset($root_path)) { $root_path = $_SERVER['DOCUMENT_ROOT']; }
   $reverseHistory = array();
   $sql = sprintf("SELECT * FROM dataClassic WHERE owner='%s' AND npA>'' AND pA>'' ORDER BY insertDT DESC",$uid);
   $result = $igrtSqli->query($sql);
-  if ($result) {
+  if ($result->num_rows>0) {
     while ($row=$result->fetch_object()) {
       $det=array(
         'jQuestion'=>$row->jQ,
@@ -116,7 +116,7 @@ if (!isset($root_path)) { $root_path = $_SERVER['DOCUMENT_ROOT']; }
   // get np and p replies
   $sql = sprintf("SELECT * FROM dataClassic WHERE owner='%s' ORDER BY insertDT DESC",$uid);
   $result=$igrtSqli->query($sql);
-  if ($result) {
+  if ($result->num_rows>0) {
     $row = $result->fetch_object(); // most recent is top of the list
     if ($row->jQ > '') {$jSonOut['jQ']=$row->jQ;}
     if ($npLeft == 1) {
@@ -131,7 +131,7 @@ if (!isset($root_path)) { $root_path = $_SERVER['DOCUMENT_ROOT']; }
   // get l & r 
   $sql = sprintf("SELECT * FROM igActiveClassicUsers WHERE uid='%s'",$uid);
   $currentResult = $igrtSqli->query($sql);
-  if ($currentResult) {
+  if ($currentResult->num_rows>0) {
     $row = $currentResult->fetch_object();
     switch ($row->jState) {
       case 0: {

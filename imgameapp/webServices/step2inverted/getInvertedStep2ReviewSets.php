@@ -140,7 +140,7 @@ include_once $root_path.'/helpers/models/class.experimentModel.php';
           $exptId, $jType, $dayNo, $sessionNo, $jNo);
       $pptListResult = $igrtSqli->query($pptQry);
       //echo $pptQry;
-      if ($pptListResult) {
+      if ($pptListResult->num_rows>0) {
         while ($pptListRow = $pptListResult->fetch_object()) {
           $pptNo = $pptListRow->pptNo;
           $respondentStatusQry = sprintf("SELECT * FROM wt_Step2pptStatusInverted "
@@ -149,7 +149,7 @@ include_once $root_path.'/helpers/models/class.experimentModel.php';
             $exptId, $jType, $actualJNo, $pptNo);
           $respondentResult = $igrtSqli->query($respondentStatusQry);
           //echo $respondentStatusQry;
-          if ($respondentResult) {
+          if ($respondentResult->num_rows>0) {
             $respondentRow = $respondentResult->fetch_object();
             $discardPpt = $respondentRow->discarded;
             $pptFinished = $respondentRow->finished;
@@ -189,7 +189,7 @@ include_once $root_path.'/helpers/models/class.experimentModel.php';
                 //echo $replyQry;
                 $reply = '';
                 $pptNo = -1;
-                if ($replyResult) {
+                if ($replyResult->num_rows>0) {
                   $replyRow = $replyResult->fetch_object();
                   if (strlen($replyRow->reply) > strlen($reply)) { $reply = $replyRow->reply; }
                   $pptNo = $replyRow->pptNo;
@@ -273,7 +273,7 @@ include_once $root_path.'/helpers/models/class.experimentModel.php';
         $ignoreQry = sprintf("SELECT * FROM wt_Step2pptReviewsInverted WHERE exptId='%s' AND jType='%s' AND actualJNo='%s' AND uid='%s'", 
             $exptId, $jType, $actualJNo, $uid);
         $ignoreResults = $igrtSqli->query($ignoreQry);
-        if ($ignoreResults) {
+        if ($ignoreResults->num_rows>0) {
           $ignoreRow = $ignoreResults->fetch_object();
           $pptDef['ignorePpt'] = $ignoreRow->ignorePpt;
           $pptDef['marked'] = $ignoreRow->reviewed;
@@ -289,7 +289,7 @@ include_once $root_path.'/helpers/models/class.experimentModel.php';
             $exptId, $jType, $actualJNo, $respNo);
         //echo $pptStatusQry;
         $pptStatusResult = $igrtSqli->query($pptStatusQry);
-        if ($pptStatusResult) {
+        if ($pptStatusResult->num_rows>0) {
           $pptStatusRow = $pptStatusResult->fetch_object();
           $restartUID = $pptStatusRow->restartUID;                
         }
@@ -302,7 +302,7 @@ include_once $root_path.'/helpers/models/class.experimentModel.php';
         //echo $turnQry;
         $turnResult = $igrtSqli->query($turnQry);
         $wordCnt = 0;
-        //echo $igrtSqli->affected_rows;
+        //echo $igrtSqli->num_rows;
         while ($turnRow = $turnResult->fetch_object()) {
           //echo $turnRow->qNo;
           $qNo = $turnRow->qNo;
@@ -331,7 +331,7 @@ include_once $root_path.'/helpers/models/class.experimentModel.php';
       $pptStatusQry = sprintf("SELECT * FROM wt_Step2pptStatusInverted WHERE exptId='%s' AND jType='%s' AND actualJNo='%s' AND finished='1' ORDER BY respNo ASC",
           $exptId, $jType, $actualJNo);
       $pptStatusResult = $igrtSqli->query($pptStatusQry);
-      if ($pptStatusResult) {
+      if ($pptStatusResult->num_rows>0) {
         while ($pptStatusRow = $pptStatusResult->fetch_object()) {
           $discardedPpt = $pptStatusRow->discarded;
           $respNo = $pptStatusRow->respNo;
@@ -369,7 +369,7 @@ include_once $root_path.'/helpers/models/class.experimentModel.php';
         . "dayNo='%s' AND sessionNo='%s' AND jNo='%s' AND canUse=1 ORDER by qNo ASC",
         $exptId, $jType, $dayNo, $sessionNo, $jNo);
     $getStep1Result = $igrtSqli->query($getStep1Qry);
-    if ($getStep1Result) {
+    if ($getStep1Result->num_rows>0) {
       while ($getStep1Row = $getStep1Result->fetch_object()) {
         $qNo = $getStep1Row->qNo;
         $q = $getStep1Row->q;
@@ -386,7 +386,7 @@ include_once $root_path.'/helpers/models/class.experimentModel.php';
             $exptId, $jType, $dayNo, $sessionNo, $jNo, $pptNo, $qNo);
         echo $getReplyQry;
         $getReplyResult = $igrtSqli->query($getReplyQry);
-        if ($getReplyResult) {
+        if ($getReplyResult->num_rows>0) {
           $getReplyRow = $getReplyResult->fetch_object();
           $turnDef['reply'] = $getReplyRow->reply;
           $wordCnt += countSpaces($turnDef['reply']);

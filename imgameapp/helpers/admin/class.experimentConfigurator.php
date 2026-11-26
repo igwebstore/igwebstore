@@ -3,13 +3,12 @@
  * Experiment Configuration
  * top-level controller to create/delete experiments
  * @author MartinHall
- * used mainly in AJAX registrationViews, but also used in Step1 admin registrationViews to
+ * used mainly in AJAX pages, but also used in Step1 admin pages to
  * provide experiment status details
  */
 ini_set('display_errors', 'On');
 error_reporting(E_ALL);
 if (!isset($root_path)) { $root_path = $_SERVER['DOCUMENT_ROOT']; }
-include_once $root_path.'/domainSpecific/mySqlObject.php';
 include_once $root_path.'/helpers/models/class.experimentModel.php';
 include_once $root_path.'/helpers/forms/class.stepFormsHandler.php';
 include_once $root_path.'/helpers/parseJSON.php';
@@ -27,45 +26,43 @@ class experimentConfigurator {
   private $htmlBuilder; // currently still used in Step1 controller
   private $_tabIndex;
   private $userPermissions;
+  private $igrtSqli;
   
   function debugLog($logEntry) {
-    global $igrtSqli;
     $insertQry = sprintf("INSERT INTO debugLog (Message) VALUES('%s')", $logEntry);
-    $igrtSqli->query($insertQry);
+    $this->igrtSqli->query($insertQry);
   }
 
 // <editor-fold defaultstate="collapsed" desc=" top level experiment controls and helpers">
 
 	function populateExperimentGroupMappings() {
-		global $igrtSqli;
 		$getExptQry = "SELECT * FROM igExperiments";
-		$exptResult = $igrtSqli->query($getExptQry);
+		$exptResult = $this->igrtSqli->query($getExptQry);
 		while ($exptRow = $exptResult->fetch_object()) {
 			$insertQry = sprintf("INSERT INTO igExperimentGroupMappings (groupId, exptId) VALUES ('1', '%s')", $exptRow->exptId );
-			$igrtSqli->query($insertQry);
+			$this->igrtSqli->query($insertQry);
 		}
 	}
 
 	function getTopLevelControlsJSON($tlRow) {
-		global $igrtSqli;
 		$json = '';
 		$count = 0;
 		switch ($tlRow->id) {
 			case 1: {
 				$categoriesQry = sprintf("SELECT * FROM ui_experimentCategories WHERE parentId='%s'", $tlRow->id);
         //$this->debugLog($categoriesQry);
-				$categoriesResult = $igrtSqli->query($categoriesQry);
+				$categoriesResult = $this->igrtSqli->query($categoriesQry);
 				if ($categoriesResult->num_rows > 0) {
 					while ($categoryRow = $categoriesResult->fetch_object()) {
 						// get accordion statuses
 						$isClosed = true;
 						$accordionQry = sprintf("SELECT * FROM ui_experimentCategoriesUserStatus WHERE categoryId='%s' AND userId='%s'", $categoryRow->id, $this->uid);
             //$this->debugLog($accordionQry);
-            $accordionResult = $igrtSqli->query($accordionQry);
+            $accordionResult = $this->igrtSqli->query($accordionQry);
 						if ($accordionResult->num_rows == 0) {
 							// insert new record for this user/category
 							$insertQry = sprintf("INSERT INTO ui_experimentCategoriesUserStatus (categoryId, userId, isClosed) VALUES ('%s', '%s', '1')", $categoryRow->id, $this->uid);
-							$igrtSqli->query($insertQry);
+							$this->igrtSqli->query($insertQry);
 						}
 						else {
 							$accordionRow = $accordionResult->fetch_object();
@@ -95,17 +92,17 @@ class experimentConfigurator {
 				// get accordion statuses
 				$sectionsQry = sprintf("SELECT * FROM ui_sectionCategories ");
         //echo $sectionsQry;
-				$sectionsResult = $igrtSqli->query($sectionsQry);
+				$sectionsResult = $this->igrtSqli->query($sectionsQry);
 				if ($sectionsResult->num_rows>0) {
 					while ($sectionRow = $sectionsResult->fetch_object()) {
 						$isClosed = true;
 						$accordionQry = sprintf("SELECT * FROM ui_sectionCategoriesUserStatus WHERE sectionId='%s' AND userId='%s'", $sectionRow->id, $this->uid);
 						//echo $accordionQry;
-            $accordionResult = $igrtSqli->query($accordionQry);
+            $accordionResult = $this->igrtSqli->query($accordionQry);
 						if ($accordionResult->num_rows == 0) {
 							// insert new record for this user/category
 							$insertQry = sprintf("INSERT INTO ui_sectionCategoriesUserStatus (sectionId, userId, isClosed) VALUES ('%s', '%s', '1')", $sectionRow->id, $this->uid);
-							$igrtSqli->query($insertQry);
+							$this->igrtSqli->query($insertQry);
 						}
 						else {
 							$accordionRow = $accordionResult->fetch_object();
@@ -177,24 +174,23 @@ class experimentConfigurator {
 	}
 
 	function getAdminHubItems() {
-		global $igrtSqli;
 		//$this->populateExperimentGroupMappings();
 		// get tabs info
 		$json = "{\"tabs\":[";
 		$topLevelQry = "SELECT * FROM ui_topLevelSections ORDER BY id ASC";
     //$this->debugLog($topLevelQry);
-		$tlResult = $igrtSqli->query($topLevelQry);
+		$tlResult = $this->igrtSqli->query($topLevelQry);
 		$count = -1;
 		while ($tlRow = $tlResult->fetch_object()) {
 			$accordionQry = sprintf("SELECT * FROM ui_topLevelSectionsUserStatus WHERE accordionId='%s' AND uid='%s'", $tlRow->id, $this->uid);
       //$this->debugLog($accordionQry);
       //echo $accordionQry;
-			$accordionResult = $igrtSqli->query($accordionQry);
+			$accordionResult = $this->igrtSqli->query($accordionQry);
 			$isClosed = 1;
 			if ($accordionResult->num_rows == 0) {
 				// make a record for this user
 				$insert = sprintf("INSERT INTO ui_topLevelSectionsUserStatus (uid, accordionId, isClosed) VALUES ('%s', '%s', '1')", $this->uid, $tlRow->id );
-				$igrtSqli->query($insert);
+				$this->igrtSqli->query($insert);
 			}
 			else {
 				$accordionRow = $accordionResult->fetch_object();
@@ -217,11 +213,10 @@ class experimentConfigurator {
 	}
 
 	function getSystemSectionList($categoryId) {
-		global $igrtSqli;
 		$sectionList = [];
 		$sectionQry = sprintf("SELECT * FROM ui_sectionControlKeys WHERE sectionControlHeaderKey='%s' ORDER BY displayOrder ASC", $categoryId);
 		//echo $sectionQry;
-    $sectionResult = $igrtSqli->query($sectionQry);
+    $sectionResult = $this->igrtSqli->query($sectionQry);
 		while ($sectionRow = $sectionResult->fetch_object()) {
 			array_push($sectionList, $sectionRow);
 		}
@@ -244,7 +239,6 @@ class experimentConfigurator {
 	}
 
 	function getExperimentListArray($isInactive, $isInjected) {
-		global $igrtSqli;
 		$userPermissions = $this->userPermissions;
 		$exptList = [];
 		$sqlqry_exptList=sprintf("SELECT * "
@@ -253,7 +247,7 @@ class experimentConfigurator {
 			. "AND t1.exptId=t2.exptId AND t3.exptId=t2.exptId ORDER BY t1.exptId DESC",
 			$isInactive, $isInjected);
     //echo $sqlqry_exptList;
-		$exptResult = $igrtSqli->query($sqlqry_exptList);
+		$exptResult = $this->igrtSqli->query($sqlqry_exptList);
 		if ($exptResult->num_rows>0) {
 			while ($row = $exptResult->fetch_object()) {
 				$canList = false;
@@ -280,9 +274,8 @@ class experimentConfigurator {
   }
   
   function getHeadersStates() {
-    global $igrtSqli;
     $getStates = sprintf("SELECT * FROM ui_experimentControlHeaders WHERE uid='%s' AND exptId='%s'", $this->uid, $this->exptId);
-    $result = $igrtSqli->query($getStates);
+    $result = $this->igrtSqli->query($getStates);
     if ($result->num_rows > 0) {
       $row = $result->fetch_object();
       return [
@@ -302,7 +295,7 @@ class experimentConfigurator {
     }
     else {
       $insert = sprintf("INSERT INTO ui_experimentControlHeaders (uid, exptId) VALUES('%s', '%s')", $this->uid, $this->exptId);
-      $igrtSqli->query($insert);
+      $this->igrtSqli->query($insert);
       return [
         'operationGroupClosed'=> 1,
         'experimentOverviewClosed'=> 1,
@@ -325,10 +318,9 @@ class experimentConfigurator {
 // <editor-fold defaultstate="collapsed" desc=" helpers for once an experiment has been selected">
 
 	function getExperimentControlHeadersJSON($exptId, $userPermissions, $headerStates) {
-		global $igrtSqli;
 		$json = "";
 		$getHeaderKeys = "SELECT * FROM ui_experimentControlHeaderKeys ORDER BY id ASC";
-		$hkResult = $igrtSqli->query($getHeaderKeys);
+		$hkResult = $this->igrtSqli->query($getHeaderKeys);
 		if ($hkResult->num_rows > 0) {
 			$hkList = [];
 			while ($hkRow = $hkResult->fetch_object()) {
@@ -340,7 +332,7 @@ class experimentConfigurator {
 					'items'=>[]
 				];
 				$getControlKeys = sprintf("SELECT * FROM ui_experimentControlKeys WHERE experimentControlHeaderKey='%s' ORDER BY id ASC", $hkRow->id);
-				$ckResult = $igrtSqli->query($getControlKeys);
+				$ckResult = $this->igrtSqli->query($getControlKeys);
 				if ($ckResult->num_rows > 0) {
 					while ($ckRow = $ckResult->fetch_object()) {
 						$canShow = false;
@@ -435,12 +427,11 @@ class experimentConfigurator {
 	}
 
   function getExperimentControls($exptId, $messageType) {
-    global $igrtSqli;
     $sqlqry_exptList=sprintf("SELECT * "
         . "FROM igExperiments as t1 JOIN edContentDefs_refactor as t2 JOIN edExptStatic_refactor as t3 "
         . "WHERE t1.exptId='%s' AND t1.exptId=t2.exptId AND t3.exptId=t2.exptId ORDER BY t1.exptId DESC", 
         $exptId);
-    $exptResult=$igrtSqli->query($sqlqry_exptList);
+    $exptResult=$this->igrtSqli->query($sqlqry_exptList);
     if ($exptResult->num_rows >0) {
       $row = $exptResult->fetch_object();
       $eModel = $this->getExperimentStatusAndUI($row);
@@ -497,13 +488,12 @@ class experimentConfigurator {
   }
 
   function getStep1ExperimentListHtml($uid, $permissions, $step1SessionControllers) {
-    global $igrtSqli;
     $html="";
     if ($permissions >= 255) {
       $sqlQry_step1List="SELECT * FROM igExperiments WHERE isInactive='0' AND isInjected='0'  ORDER BY exptId DESC";
       //echo $sqlQry_step1List;
     }
-    $listResults = $igrtSqli->query($sqlQry_step1List);
+    $listResults = $this->igrtSqli->query($sqlQry_step1List);
     if ($listResults->num_rows > 0) {
       while ($row = $listResults->fetch_object()) {
         $exptId = $row->exptId;
@@ -512,7 +502,7 @@ class experimentConfigurator {
           $html.= "<table><tr><th>day</th><th>session</th><th>desc/time</th><th>done?</th><th>judges per role</th><th>g1 allocations</th><th>g2 allocations</th><th>automated run</th></tr>";
           $sqlDaySession = sprintf("SELECT * FROM edExptStatic_refactor WHERE exptId='%s'", $exptId);
           //echo $sqlDaySession;
-          $DaySessionResult = $igrtSqli->query($sqlDaySession);
+          $DaySessionResult = $this->igrtSqli->query($sqlDaySession);
           if ($DaySessionResult->num_rows > 0) {
             $daySessRow = $DaySessionResult->fetch_object();
             // get dayNo & sessionNo & jCnt for this experiment from edExptStatic_refactor
@@ -521,7 +511,7 @@ class experimentConfigurator {
               for ($j=1; $j<=$daySessRow->noSessions; $j++) {
                 $isActive = $this->isStep1Active($step1SessionControllers, $exptId, $i , $j);               
                 $sqlQry_sessions=sprintf("SELECT * FROM edSessions WHERE exptId='%s' AND dayNo='%s' AND sessionNo='%s'", $exptId, $i, $j);
-                $sessionResult=$igrtSqli->query($sqlQry_sessions);
+                $sessionResult=$this->igrtSqli->query($sqlQry_sessions);
                 if ($sessionResult->num_rows > 0) {
                   $sessionRow=$sessionResult->fetch_object();
                   $html.="<tr>";
@@ -576,38 +566,36 @@ class experimentConfigurator {
 // <editor-fold defaultstate="collapsed" desc=" expt config wizard - experiment summary and global settings">
       
   function addLocation($exptId, $newLocation) {
-    global $igrtSqli;
     // see if it exists
     $sqlQry_locationExists=sprintf("SELECT * FROM igLocations WHERE label='%s'",$newLocation);
-    $locExistsResult=$igrtSqli->query($sqlQry_locationExists);
+    $locExistsResult=$this->igrtSqli->query($sqlQry_locationExists);
     if ($locExistsResult->num_rows > 0) {
         // find a way to alert the user that their location already exists?
     }
     else {
       $sqlCmd_addLocation=sprintf("INSERT INTO igLocations (label) VALUES(\"%s\")",$newLocation);
-      $igrtSqli->query($sqlCmd_addLocation);           
-      $locId = $igrtSqli->insert_id;
+      $this->igrtSqli->query($sqlCmd_addLocation);
+      $locId = $this->igrtSqli->insert_id;
       $sqlSetLocation = sprintf("UPDATE edExptStatic_refactor SET location='%s' WHERE exptId='%s'", $locId, $exptId);
-      $igrtSqli->query($sqlSetLocation);
+      $this->igrtSqli->query($sqlSetLocation);
     }
   }
 
   function addSubject($exptId, $newSubject) {
-    global $igrtSqli;
     // see if it exists
     $sqlSubjectExists = sprintf("SELECT * FROM igProfileAttributes WHERE label='%s'", $newSubject);
-    $subExistsResult = $igrtSqli->query($sqlSubjectExists);
+    $subExistsResult = $this->igrtSqli->query($sqlSubjectExists);
     if ($subExistsResult->num_rows > 0) {
         // find a way to alert the user that the subject already exists?
     }
     else {
       $tblName = preg_replace('/\s+/', '', $newSubject);
       $sqlAddSubject = sprintf("INSERT INTO igProfileAttributes (label, tblName) VALUES('%s', '%s')", $newSubject, $tblName);
-      $igrtSqli->query($sqlAddSubject);
+      $this->igrtSqli->query($sqlAddSubject);
       //echo $sqlAddSubject;
-      $subId = $igrtSqli->insert_id;
+      $subId = $this->igrtSqli->insert_id;
       $sqlSetSubject = sprintf("UPDATE edExptStatic_refactor SET exptSubject='%s' WHERE exptId='%s'", $subId, $exptId);
-      $igrtSqli->query($sqlSetSubject);
+      $this->igrtSqli->query($sqlSetSubject);
     }
   }
         
@@ -617,9 +605,8 @@ class experimentConfigurator {
   }
      
   function stepUpdateFieldValue($exptId, $cId, $cValue) {
-    global $igrtSqli;
-    $updateSql = sprintf("UPDATE edRespContent SET %s='%s' WHERE exptId='%s'", $cId, $igrtSqli->real_escape_string($cValue), $exptId);
-    $igrtSqli->query($updateSql);
+    $updateSql = sprintf("UPDATE edRespContent SET %s='%s' WHERE exptId='%s'", $cId, $this->igrtSqli->real_escape_string($cValue), $exptId);
+    $this->igrtSqli->query($updateSql);
     return "<message><messageType>NOOP</messageType></message>"; // Non operational message
   }
   
@@ -752,10 +739,9 @@ class experimentConfigurator {
   }
   
   function toggleUseForm($exptId, $formName, $uValue) {
-    global $igrtSqli;
     $setValue = ($uValue == 'true')? 1 : 0;
     $uSql = sprintf("UPDATE edExptStatic_refactor SET %s='%s' WHERE exptId='%s'", $formName, $setValue, $exptId);
-    $igrtSqli->query($uSql);    
+    $this->igrtSqli->query($uSql);
     return "<message><messageType>blank</messageType><content>0</content></message>"; 
   }
 
@@ -838,9 +824,8 @@ class experimentConfigurator {
   }
   
   function getLogin($uid) {
-    global $igrtSqli;
     $uidQry = sprintf("SELECT email FROM igUsers WHERE id='%s'", $uid);
-    $uidResult = $igrtSqli->query($uidQry);
+    $uidResult = $this->igrtSqli->query($uidQry);
     if ($uidResult->num_rows>0) {
       $uidRow = $uidResult->fetch_object();
       return $uidRow->email;
@@ -849,14 +834,12 @@ class experimentConfigurator {
   }
   
   function getFormDataCount($dataTableName, $formType) {
-    global $igrtSqli;
     $qry = sprintf("SELECT * FROM %s WHERE formType = '%s'", $dataTableName, $formType);
-    $result = $igrtSqli->query($qry);
+    $result = $this->igrtSqli->query($qry);
     return $result ? $result->num_rows : 0;
   }
   
   function getDataSummary() {
-    global $igrtSqli;
     $ds = [
       'hasData' => false,
       'step1PreForm' => 0,
@@ -870,7 +853,7 @@ class experimentConfigurator {
     ];
     $dataTableName = "zz_json_" . $this->exptId;
     $dataExistsQry = sprintf("SELECT count((1)) as ct  FROM INFORMATION_SCHEMA.TABLES where table_schema ='igrt' and table_name='%s'", $dataTableName); 
-    $dataExistsResult = $igrtSqli->query($dataExistsQry);
+    $dataExistsResult = $this->igrtSqli->query($dataExistsQry);
     if ($dataExistsResult->num_rows >0) {
       $dataExistsRow = $dataExistsResult->fetch_object();
       if ($dataExistsRow->ct > 0) {
@@ -890,11 +873,10 @@ class experimentConfigurator {
   }
   
   function getStepCategories($step, &$noCategories) {
-    global $igrtSqli;
     $retArray = [];
     $categoriesQry = sprintf("SELECT * FROM edAlignmentControlLabels WHERE exptId='%s' "
         . "AND step='%s' ORDER BY displayOrder ASC", $this->exptId, $step);
-    $categoriesResult = $igrtSqli->query($categoriesQry);
+    $categoriesResult = $this->igrtSqli->query($categoriesQry);
     $noCategoriesCheck = $categoriesResult ? $categoriesResult->num_rows : 0;
     if ($noCategoriesCheck == 0) {
       // create default items
@@ -904,7 +886,7 @@ class experimentConfigurator {
         $labelValue = "category".$labelValue;
         $insertQry = sprintf("INSERT INTO edAlignmentControlLabels (exptId,step,label,displayOrder)"
             . " VALUES('%s','%s','%s','%s')", $this->exptId, $step, $labelValue, $i);
-        $igrtSqli->query($insertQry);
+        $this->igrtSqli->query($insertQry);
       }
     }
     else {
@@ -999,7 +981,6 @@ class experimentConfigurator {
   } 
   
   function getStep1Sessions() {
-    global $igrtSqli;
     $judgeSelectJSON = $this->metadataConverter->getSelectJSONArray(4,128);
     $daySelectJSON = $this->metadataConverter->getSelectJSONArray(1,10);
     $sessionSelectJSON = $this->metadataConverter->getSelectJSONArray(1,10);
@@ -1028,8 +1009,8 @@ class experimentConfigurator {
         'dimension2Name' => 'sessionNo'
       );
       $dsSql = sprintf("SELECT * FROM edSessions WHERE exptId='%s' ORDER By dayNo ASC, sessionNo ASC", $this->exptId);
-      $dsResult = $igrtSqli->query($dsSql);
       $subItems = [];
+      $dsResult = $this->igrtSqli->query($dsSql);
       if ($dsResult->num_rows > 0) {
         while ($dsRow = $dsResult->fetch_object()) {
           $subItemFieldValues = array(
@@ -1052,10 +1033,9 @@ class experimentConfigurator {
   }
   
   function getStep1InterrogatorRating() {
-    global $igrtSqli;
     $noSliderPoints = $this->eModel->noLikert;
     $sliderLabelsQry = sprintf("SELECT * FROM edLabels WHERE exptId='%s' AND whichLikert=0 ORDER BY confidenceValue ASC", $this->exptId);
-    $sliderLabelsResult = $igrtSqli->query($sliderLabelsQry);
+    $sliderLabelsResult = $this->igrtSqli->query($sliderLabelsQry);
     $noSliderCheck = $sliderLabelsResult ? $sliderLabelsResult->num_rows : 0;
     if ($noSliderCheck == 0) {
       // houston, so create 4 defaults
@@ -1065,8 +1045,8 @@ class experimentConfigurator {
           . "('%s', 0 ,'I am more sure than unsure', 3),"
           . "('%s', 0 ,'I am pretty sure', 4)",
           $this->exptId, $this->exptId, $this->exptId, $this->exptId);
-      $igrtSqli->query($insertSql);
-      $sliderLabelsResult = $igrtSqli->query($sliderLabelsQry);
+      $this->igrtSqli->query($insertSql);
+      $sliderLabelsResult = $this->igrtSqli->query($sliderLabelsQry);
     }
     else {
       if ($noSliderCheck != $noSliderPoints) { $noSliderPoints = $noSliderCheck; }
@@ -1121,10 +1101,9 @@ class experimentConfigurator {
   }
   
   function getStep1InterrogatorFinalRating() {
-    global $igrtSqli;
     $noSliderPoints = $this->eModel->noFinalLikert;
     $sliderLabelsQry = sprintf("SELECT * FROM edLabels WHERE exptId='%s' AND whichLikert=2 ORDER BY confidenceValue ASC", $this->exptId);
-    $sliderLabelsResult = $igrtSqli->query($sliderLabelsQry);
+    $sliderLabelsResult = $this->igrtSqli->query($sliderLabelsQry);
     $noSliderCheck = $sliderLabelsResult ? $sliderLabelsResult->num_rows : 0;
     if ($noSliderCheck == 0) {
       // houston, so create 4 defaults
@@ -1134,8 +1113,8 @@ class experimentConfigurator {
           . "('%s', 2 ,'I am more sure than unsure', 3),"
           . "('%s', 2 ,'I am pretty sure', 4)",
           $this->exptId, $this->exptId, $this->exptId, $this->exptId);
-      $igrtSqli->query($insertSql);
-      $sliderLabelsResult = $igrtSqli->query($sliderLabelsQry);
+      $this->igrtSqli->query($insertSql);
+      $sliderLabelsResult = $this->igrtSqli->query($sliderLabelsQry);
     }
     else {
       if ($noSliderCheck != $noSliderPoints) { $noSliderPoints = $noSliderCheck; }
@@ -1187,10 +1166,9 @@ class experimentConfigurator {
   }
     
   function getStep1InterrogatorAlignment() {
-    global $igrtSqli;
     $s1NoCategories = $this->eModel->s1NoCategories;
     $sql = sprintf("SELECT * FROM edAlignmentControlLabels WHERE exptId='%s' AND step=1 ORDER BY displayOrder ASC", $this->exptId);
-    $result = $igrtSqli->query($sql);
+    $result = $this->igrtSqli->query($sql);
     $noCategoriesCheck = $result ? $result->num_rows: 0;
     if ($noCategoriesCheck == 0) {
       // houston, so create 3 defaults
@@ -1199,8 +1177,8 @@ class experimentConfigurator {
           . "('%s', 1, 'form', 2),"
           . "('%s', 1, 'grammar', 3)",
           $this->exptId, $this->exptId, $this->exptId);
-      $igrtSqli->query($insertSql);
-      $result = $igrtSqli->query($sql);
+      $this->igrtSqli->query($insertSql);
+      $result = $this->igrtSqli->query($sql);
     }
     else {
       if ($noCategoriesCheck != $s1NoCategories) { $s1NoCategories = $noCategoriesCheck; }
@@ -1359,9 +1337,8 @@ class experimentConfigurator {
   }
   
   function getStep2Balancer() {
-    global $igrtSqli;
     $sql = sprintf("SELECT * FROM wt_Step2BalancerRespMax WHERE exptId='%s'", $this->exptId);
-    $result = $igrtSqli->query($sql);
+    $result = $this->igrtSqli->query($sql);
     if ($result->num_rows >0) {
       $row = $result->fetch_object();
       $evenNo = $row->evenRespMax;
@@ -1372,10 +1349,10 @@ class experimentConfigurator {
       $oddNo = 1;
     }
     $sql = sprintf("SELECT * FROM dataSTEP2 WHERE exptId='%s' AND jType=0", $this->exptId);
-    $result = $igrtSqli->query($sql);
+    $result = $this->igrtSqli->query($sql);
     $hasEven = $result ? true : false;
     $sql = sprintf("SELECT * FROM dataSTEP2 WHERE exptId='%s' AND jType=1", $this->exptId);
-    $result = $igrtSqli->query($sql);
+    $result = $this->igrtSqli->query($sql);
     $hasOdd = $result ? true : false;
     $selectJSON = $this->metadataConverter->getSelectJSONArray(1,50);
     $json = "{\"sectionTitle\": \"Step2 P balancer\",\"sectionName\": \"s2Balancer\",\"exptId\":".$this->exptId.",\"formFields\":[";
@@ -1430,9 +1407,8 @@ class experimentConfigurator {
   }
 
   function getIStep2Balancer() {
-    global $igrtSqli;
     $sql = sprintf("SELECT * FROM wt_Step2BalancerRespMax WHERE exptId='%s'", $this->exptId);
-    $result = $igrtSqli->query($sql);
+    $result = $this->igrtSqli->query($sql);
     if ($result->num_rows>0) {
       $row = $result->fetch_object();
       $evenNo = $row->invertedEvenRespMax;
@@ -1443,11 +1419,11 @@ class experimentConfigurator {
       $oddNo = 1;
     }
     $sql = sprintf("SELECT * FROM dataSTEP2inverted WHERE exptId='%s' AND jType=0", $this->exptId);
-    $result = $igrtSqli->query($sql);
-    $hasEven = $result ? true : false;
+    $result = $this->igrtSqli->query($sql);
+    $hasEven = $result->num_rows>0 ? true : false;
     $sql = sprintf("SELECT * FROM dataSTEP2inverted WHERE exptId='%s' AND jType=1", $this->exptId);
-    $result = $igrtSqli->query($sql);
-    $hasOdd = $result ? true : false;
+    $result = $this->igrtSqli->query($sql);
+    $hasOdd = $result->num_rows ? true : false;
     $selectJSON = $this->metadataConverter->getSelectJSONArray(1,50);
     $json = "{\"sectionTitle\": \"Step2 NP (inverted) balancer\",\"sectionName\": \"iS2Balancer\",\"exptId\":".$this->exptId.",\"formFields\":[";
       $pageWarning = "Note: the balancer values are actuated when pressing `save and operate on changes`";
@@ -1486,11 +1462,10 @@ class experimentConfigurator {
   }
     
   function getStep4JudgeAlignment() {
-    global $igrtSqli;
     $s4NoCategories = $this->eModel->s4NoCategories;
     $sql = sprintf("SELECT * FROM edAlignmentControlLabels WHERE exptId='%s' AND step=4 ORDER BY displayOrder ASC", $this->exptId);
-    $result = $igrtSqli->query($sql);
-    $noCategoriesCheck = $result ? $result->num_rows : 0;
+    $result = $this->igrtSqli->query($sql);
+    $noCategoriesCheck = $result->num_rows>0 ? $result->num_rows : 0;
     if ($noCategoriesCheck == 0) {
       // houston, so create 3 defaults
       $insertSql = sprintf("INSERT INTO edAlignmentControlLabels (exptId, step, label, displayOrder) "
@@ -1498,8 +1473,8 @@ class experimentConfigurator {
           . "('%s', 4, 'form', 2),"
           . "('%s', 4, 'grammar', 3)",
           $this->exptId, $this->exptId, $this->exptId);
-      $igrtSqli->query($insertSql);
-      $result = $igrtSqli->query($sql);
+      $this->igrtSqli->query($insertSql);
+      $result = $this->igrtSqli->query($sql);
     }
     else {
       if ($noCategoriesCheck != $s4NoCategories) { $s4NoCategories = $noCategoriesCheck; }
@@ -1562,33 +1537,37 @@ class experimentConfigurator {
       
       
       $json.= $this->makeFormFieldJSON($index, "checkbox", "edExptStatic_refactor", "step1PreForm", "use pre-step1 survey", $this->eModel->step1PreForm, "", "", "yes", "no", "[]", false, [], [], "", "", "") . ",";
-      $json.= $this->makeFormFieldJSON($index, "button", "", "", "clone pre-step1 survey", "", "", "", "", "", "[]", false, [], [], "1_3_1_2", "clone", "2") . ",";
       $json.= $this->makeFormFieldJSON($index, "button", "", "", "configure pre-step1 survey", "", "", "", "", "", "[]", false, [], [], "1_3_2_2", "configure", "2") . ",";
+      $json.= $this->makeFormFieldJSON($index, "button", "", "", "clone pre-step1 survey", "", "", "", "", "", "[]", false, [], [], "1_3_1_2", "clone", "2") . ",";
+      
       $json.= $this->makeFormFieldJSON($index, "checkbox", "edExptStatic_refactor", "step1PostForm", "use post-step1 survey", $this->eModel->step1PostForm, "", "", "yes", "no", "[]", false, [], [], "", "", "") . ",";
-      $json.= $this->makeFormFieldJSON($index, "button", "", "", "clone post-step1 survey", "", "", "", "", "", "[]", false, [], [], "1_3_1_3", "clone", "3") . ",";
       $json.= $this->makeFormFieldJSON($index, "button", "", "", "configure post-step1 survey", "", "", "", "", "", "[]", false, [], [], "1_3_2_3", "configure", "3") . ",";
+      $json.= $this->makeFormFieldJSON($index, "button", "", "", "clone post-step1 survey", "", "", "", "", "", "[]", false, [], [], "1_3_1_3", "clone", "3") . ",";
 
       $json.= $this->makeFormFieldJSON($index, "checkbox", "edExptStatic_refactor", "step2PreForm", "use pre-step2 survey", $this->eModel->step2PreForm, "", "", "yes", "no", "[]", false, [], [], "", "", "") . ",";
-      $json.= $this->makeFormFieldJSON($index, "button", "", "", "clone pre-step2 survey", "", "", "", "", "", "[]", false, [], [], "1_3_1_6", "clone", "6") . ",";
       $json.= $this->makeFormFieldJSON($index, "button", "", "", "configure pre-step2 survey", "", "", "", "", "", "[]", false, [], [], "1_3_2_6", "configure", "6") . ",";
+      $json.= $this->makeFormFieldJSON($index, "button", "", "", "clone pre-step2 survey", "", "", "", "", "", "[]", false, [], [], "1_3_1_6", "clone", "6") . ",";
+    
       $json.= $this->makeFormFieldJSON($index, "checkbox", "edExptStatic_refactor", "step2PostForm", "use post-step2 survey", $this->eModel->step2PostForm, "", "", "yes", "no", "[]", false, [], [], "", "", "") . ",";
-      $json.= $this->makeFormFieldJSON($index, "button", "", "", "clone post-step2 survey", "", "", "", "", "", "[]", false, [], [], "1_3_1_7", "clone", "7") . ",";
       $json.= $this->makeFormFieldJSON($index, "button", "", "", "configure post-step2 survey", "", "", "", "", "", "[]", false, [], [], "1_3_2_7", "configure", "7") . ",";
+      $json.= $this->makeFormFieldJSON($index, "button", "", "", "clone post-step2 survey", "", "", "", "", "", "[]", false, [], [], "1_3_1_7", "clone", "7") . ",";
 
       $json.= $this->makeFormFieldJSON($index, "checkbox", "edExptStatic_refactor", "step2PreInvert", "use inv pre-step2 survey", $this->eModel->step2PreInvert, "", "", "yes", "no", "[]", false, [], [], "", "", "") . ",";
-      $json.= $this->makeFormFieldJSON($index, "button", "", "", "clone inv pre-step2 survey", "", "", "", "", "", "[]", false, [], [], "1_3_1_12", "clone", "12") . ",";
       $json.= $this->makeFormFieldJSON($index, "button", "", "", "configure inv pre-step2 survey", "", "", "", "", "", "[]", false, [], [], "1_3_2_12", "configure", "12") . ",";
+      $json.= $this->makeFormFieldJSON($index, "button", "", "", "clone inv pre-step2 survey", "", "", "", "", "", "[]", false, [], [], "1_3_1_12", "clone", "12") . ",";
+    
       $json.= $this->makeFormFieldJSON($index, "checkbox", "edExptStatic_refactor", "step2PostInvert", "use inv post-step2 survey", $this->eModel->step2PostInvert, "", "", "yes", "no", "[]", false, [], [], "", "", "") . ",";
-      $json.= $this->makeFormFieldJSON($index, "button", "", "", "clone inv post-step2 survey", "", "", "", "", "", "[]", false, [], [], "1_3_1_13", "clone", "13") . ",";
       $json.= $this->makeFormFieldJSON($index, "button", "", "", "configure inv post-step2 survey", "", "", "", "", "", "[]", false, [], [], "1_3_2_13", "configure", "13") . ",";
+      $json.= $this->makeFormFieldJSON($index, "button", "", "", "clone inv post-step2 survey", "", "", "", "", "", "[]", false, [], [], "1_3_1_13", "clone", "13") . ",";
 
-     $json.= $this->makeFormFieldJSON($index, "checkbox", "edExptStatic_refactor", "step4PreForm", "use pre-step4 survey", $this->eModel->step4PreForm, "", "", "yes", "no", "[]", false, [], [], "", "", "") . ",";
-      $json.= $this->makeFormFieldJSON($index, "button", "", "", "clone pre-step4 survey", "", "", "", "", "", "[]", false, [], [], "1_3_1_10", "clone", "10") . ",";
+      $json.= $this->makeFormFieldJSON($index, "checkbox", "edExptStatic_refactor", "step4PreForm", "use pre-step4 survey", $this->eModel->step4PreForm, "", "", "yes", "no", "[]", false, [], [], "", "", "") . ",";
       $json.= $this->makeFormFieldJSON($index, "button", "", "", "configure pre-step4 survey", "", "", "", "", "", "[]", false, [], [], "1_3_2_10", "configure", "10") . ",";
+      $json.= $this->makeFormFieldJSON($index, "button", "", "", "clone pre-step4 survey", "", "", "", "", "", "[]", false, [], [], "1_3_1_10", "clone", "10") . ",";
+    
       $json.= $this->makeFormFieldJSON($index, "checkbox", "edExptStatic_refactor", "step4PostForm", "use post-step4 survey", $this->eModel->step4PostForm, "", "", "yes", "no", "[]", false, [], [], "", "", "") . ",";
-      $json.= $this->makeFormFieldJSON($index, "button", "", "", "clone post-step4 survey", "", "", "", "", "", "[]", false, [], [], "1_3_1_11", "clone", "11") . ",";
-      $json.= $this->makeFormFieldJSON($index, "button", "", "", "configure post-step4 survey", "", "", "", "", "", "[]", false, [], [], "1_3_2_11", "configure", "11");
-      $json.= "]}";
+      $json.= $this->makeFormFieldJSON($index, "button", "", "", "configure post-step4 survey", "", "", "", "", "", "[]", false, [], [], "1_3_2_11", "configure", "11"). ",";
+      $json.= $this->makeFormFieldJSON($index, "button", "", "", "clone post-step4 survey", "", "", "", "", "", "[]", false, [], [], "1_3_1_11", "clone", "11") ;
+    $json.= "]}";
     return $json;    
   }
   
@@ -1661,11 +1640,10 @@ class experimentConfigurator {
   }
   
   function getStep1Review() {
-    global $igrtSqli;
     $json = "{\"sectionTitle\": \"Step1 review\",\"sectionName\": \"s1Review\",\"exptId\":".$this->exptId.",\"formFields\":[";
     $index = 0; // incremented in makeXXXJSON methods
     $qry = sprintf("SELECT * FROM edSessions WHERE exptId='%s' ORDER BY dayNo ASC, sessionNo ASC", $this->exptId);
-    $result = $igrtSqli->query($qry);
+    $result = $this->igrtSqli->query($qry);
     $evenShown = false;
     $oddShown = false;
     if ($result->num_rows > 0) {
@@ -1674,17 +1652,17 @@ class experimentConfigurator {
         $sessionNo = $row->sessionNo;
         // note that injected experiments may have data in the reviewed data tables but not the raw data tables
         $oddMarkedDataQry = sprintf("SELECT * FROM md_dataStep1reviewed WHERE exptId='%s' AND jType=1 AND dayNo='%s' AND sessionNo='%s'", $this->exptId, $row->dayNo, $row->sessionNo);
-        $oResult = $igrtSqli->query($oddMarkedDataQry);
-        $hasOddMarked = $oResult ? true : false;
+        $oResult = $this->igrtSqli->query($oddMarkedDataQry);
+        $hasOddMarked = $oResult->num_rows>0 ? true : false;
         $evenMarkedDataQry = sprintf("SELECT * FROM md_dataStep1reviewed WHERE exptId='%s' AND jType=0 AND dayNo='%s' AND sessionNo='%s'", $this->exptId, $row->dayNo, $row->sessionNo);
-        $eResult = $igrtSqli->query($evenMarkedDataQry);
-        $hasEvenMarked = $eResult ? true : false;
+        $eResult = $this->igrtSqli->query($evenMarkedDataQry);
+        $hasEvenMarked = $eResult->num_rows>0 ? true : false;
         $oddRawDataQry = sprintf("SELECT * FROM dataSTEP1 WHERE exptId='%s' AND jType=1 AND dayNo='%s' AND sessionNo='%s'", $this->exptId, $row->dayNo, $row->sessionNo);
-        $oResult = $igrtSqli->query($oddRawDataQry);
-        $hasOddRaw = $oResult ? true : false;
+        $oResult = $this->igrtSqli->query($oddRawDataQry);
+        $hasOddRaw = $oResult->num_rows>0 ? true : false;
         $evenRawDataQry = sprintf("SELECT * FROM dataSTEP1 WHERE exptId='%s' AND jType=0 AND dayNo='%s' AND sessionNo='%s'", $this->exptId, $row->dayNo, $row->sessionNo);
-        $eResult = $igrtSqli->query($evenRawDataQry);
-        $hasEvenRaw = $eResult ? true : false;
+        $eResult = $this->igrtSqli->query($evenRawDataQry);
+        $hasEvenRaw = $eResult->num_rows>0 ? true : false;
         //$json.=$oddMarkedDataQry.';'.$oddRawDataQry.';'.$evenMarkedDataQry.';'.$evenRawDataQry.';';
         if (($hasEvenRaw) || ($hasEvenMarked)) {
           if ($evenShown || $oddShown) { $json.=","; }
@@ -1707,15 +1685,14 @@ class experimentConfigurator {
   }
   
   function getStep2pMonitor() {
-    global $igrtSqli;
     $json = "{\"sectionTitle\": \"Step2 P monitor\",\"sectionName\": \"s2pMonitor\",\"exptId\":".$this->exptId.",\"formFields\":[";
     $index = 0; // incremented in makeXXXJSON methods
     $erQry = sprintf("SELECT * FROM dataSTEP2 WHERE exptId='%s' AND jType=0", $this->exptId);
-    $erResult = $igrtSqli->query($erQry);
-    $hasEvenRaw = $erResult ? true : false;
+    $erResult = $this->igrtSqli->query($erQry);
+    $hasEvenRaw = $erResult->num_rows>0 ? true : false;
     $orQry = sprintf("SELECT * FROM dataSTEP2 WHERE exptId='%s' AND jType=1", $this->exptId);
-    $orResult = $igrtSqli->query($orQry);
-    $hasOddRaw = $orResult ? true : false;
+    $orResult = $this->igrtSqli->query($orQry);
+    $hasOddRaw = $orResult->num_rows>0 ? true : false;
     if ($hasEvenRaw) {
       $evenMsg = "monitor even S2 Pretenders";
       $json.= $this->makeFormFieldJSON($index, "pageWarning", "", "", $evenMsg, "", "", "",  "", "", "[]", false, [], [], "", "", "", "") . ",";
@@ -1739,21 +1716,20 @@ class experimentConfigurator {
   }
   
   function getStep2pReview() {
-    global $igrtSqli;
     $json = "{\"sectionTitle\": \"Step2 P review\",\"sectionName\": \"s2pReview\",\"exptId\":".$this->exptId.",\"formFields\":[";
     $index = 0; // incremented in makeXXXJSON methods
     $erQry = sprintf("SELECT * FROM dataSTEP2 WHERE exptId='%s' AND jType=0", $this->exptId);
-    $erResult = $igrtSqli->query($erQry);
-    $hasEvenRaw = $erResult ? true : false;
+    $erResult = $this->igrtSqli->query($erQry);
+    $hasEvenRaw = $erResult->num_rows>0 ? true : false;
     $emQry = sprintf("SELECT * FROM md_dataStep2reviewed WHERE exptId='%s' AND jType=0", $this->exptId);
-    $emResult = $igrtSqli->query($emQry);
-    $hasEvenMarked = $emResult? true : false;
+    $emResult = $this->igrtSqli->query($emQry);
+    $hasEvenMarked = $emResult->num_rows>0? true : false;
     $orQry = sprintf("SELECT * FROM dataSTEP2 WHERE exptId='%s' AND jType=1", $this->exptId);
-    $orResult = $igrtSqli->query($orQry);
-    $hasOddRaw = $orResult ? true : false;
+    $orResult = $this->igrtSqli->query($orQry);
+    $hasOddRaw = $orResult->num_rows>0 ? true : false;
     $omQry = sprintf("SELECT * FROM md_dataStep2reviewed WHERE exptId='%s' AND jType=1", $this->exptId);
-    $omResult = $igrtSqli->query($omQry);
-    $hasOddMarked = $omResult ? true : false;
+    $omResult = $this->igrtSqli->query($omQry);
+    $hasOddMarked = $omResult->num_rows>0 ? true : false;
     //$json.=$emQry.';'.$erQry.';'.$omQry.';'.$orQry.';';
     if (($hasEvenRaw) || ($hasEvenMarked)) {
       $evenMsg = ($hasEvenMarked) ? "re-review even S2 Pretenders" : "first review even S2 Pretenders";
@@ -1778,15 +1754,14 @@ class experimentConfigurator {
   }
   
   function getStep2npMonitor() {
-    global $igrtSqli;
     $json = "{\"sectionTitle\": \"Step2 NP monitor\",\"sectionName\": \"s2npMonitor\",\"exptId\":".$this->exptId.",\"formFields\":[";
     $index = 0; // incremented in makeXXXJSON methods
     $erQry = sprintf("SELECT * FROM dataSTEP2inverted WHERE exptId='%s' AND jType=0", $this->exptId);
-    $erResult = $igrtSqli->query($erQry);
-    $hasEvenRaw = $erResult ? true : false;
+    $erResult = $this->igrtSqli->query($erQry);
+    $hasEvenRaw = $erResult->num_rows>0 ? true : false;
     $orQry = sprintf("SELECT * FROM dataSTEP2inverted WHERE exptId='%s' AND jType=1", $this->exptId);
-    $orResult = $igrtSqli->query($orQry);
-    $hasOddRaw = $orResult ? true : false;
+    $orResult = $this->igrtSqli->query($orQry);
+    $hasOddRaw = $orResult->num_rows>0 ? true : false;
     if ($hasEvenRaw) {
       $evenMsg = "monitor even iS2 Non-Pretenders";
       $json.= $this->makeFormFieldJSON($index, "pageWarning", "", "", $evenMsg, "", "", "",  "", "", "[]", false, [], [], "", "", "", "") . ",";
@@ -1810,21 +1785,20 @@ class experimentConfigurator {
   }
   
   function getStep2npReview() {
-    global $igrtSqli;
     $json = "{\"sectionTitle\": \"Inv Step2 NP review\",\"sectionName\": \"is2npReview\",\"exptId\":".$this->exptId.",\"formFields\":[";
     $index = 0; // incremented in makeXXXJSON methods
     $erQry = sprintf("SELECT * FROM dataSTEP2inverted WHERE exptId='%s' AND jType=0", $this->exptId);
-    $erResult = $igrtSqli->query($erQry);
-    $hasEvenRaw = $erResult ? true : false;
+    $erResult = $this->igrtSqli->query($erQry);
+    $hasEvenRaw = $erResult->num_rows>0 ? true : false;
     $emQry = sprintf("SELECT * FROM md_invertedStep2reviewed WHERE exptId='%s' AND jType=0", $this->exptId);
-    $emResult = $igrtSqli->query($emQry);
-    $hasEvenMarked = $emResult ? true : false;
+    $emResult = $this->igrtSqli->query($emQry);
+    $hasEvenMarked = $emResult->num_rows>0 ? true : false;
     $orQry = sprintf("SELECT * FROM dataSTEP2inverted WHERE exptId='%s' AND jType=1", $this->exptId);
-    $orResult = $igrtSqli->query($orQry);
-    $hasOddRaw = $orResult ? true : false;
+    $orResult = $this->igrtSqli->query($orQry);
+    $hasOddRaw = $orResult->num_rows>0 ? true : false;
     $omQry = sprintf("SELECT * FROM md_invertedStep2reviewed WHERE exptId='%s' AND jType=1", $this->exptId);
-    $omResult = $igrtSqli->query($omQry);
-    $hasOddMarked = $omResult ? true : false;
+    $omResult = $this->igrtSqli->query($omQry);
+    $hasOddMarked = $omResult->num_rows>0 ? true : false;
     //$json.=$emQry.';'.$erQry.';'.$omQry.';'.$orQry.';';
     if (($hasEvenRaw) || ($hasEvenMarked)) {
       $evenMsg = ($hasEvenMarked) ? "re-review even iS2 Non-Pretenders" : "first review even iS2 Non-Pretenders";
@@ -1862,9 +1836,8 @@ class experimentConfigurator {
   }
   
   function getStep3Shuffle() {
-    global $igrtSqli;
     $sql = sprintf("SELECT * FROM wt_Step4JudgeCounts WHERE exptId='%s'", $this->exptId);
-    $result = $igrtSqli->query($sql);
+    $result = $this->igrtSqli->query($sql);
     if ($result->num_rows > 0) {
       $row = $result->fetch_object();
       $evenS4JudgeCount = $row->evenS4JudgeCount;
@@ -1875,17 +1848,17 @@ class experimentConfigurator {
       $oddS4JudgeCount = 1;
     }
     $sql = sprintf("SELECT * FROM wt_Step4datasets WHERE exptId='%s' AND jType=0", $this->exptId);
-    $result = $igrtSqli->query($sql);
-    $evenShuffledMsg = $result ? "Even datasets have been shuffled" : "Even datasets have not been shuffled";
+    $result = $this->igrtSqli->query($sql);
+    $evenShuffledMsg = $result->num_rows>0 ? "Even datasets have been shuffled" : "Even datasets have not been shuffled";
     $sql = sprintf("SELECT * FROM wt_Step4datasets WHERE exptId='%s' AND jType=0 AND rated=1", $this->exptId);
-    $result = $igrtSqli->query($sql);
-    $evenShuffledMsg.= $result ? "warning: even data collection has started " : "";
+    $result = $this->igrtSqli->query($sql);
+    $evenShuffledMsg.= $result->num_rows>0 ? "warning: even data collection has started " : "";
     $sql = sprintf("SELECT * FROM wt_Step4datasets WHERE exptId='%s' AND jType=1", $this->exptId);
-    $result = $igrtSqli->query($sql);
-    $oddShuffledMsg = $result ? "Odd datasets have been shuffled" : "Odd datasets have not been shuffled";
+    $result = $this->igrtSqli->query($sql);
+    $oddShuffledMsg = $result->num_rows>0 ? "Odd datasets have been shuffled" : "Odd datasets have not been shuffled";
     $sql = sprintf("SELECT * FROM wt_Step4datasets WHERE exptId='%s' AND jType=1 AND rated=1", $this->exptId);
-    $result = $igrtSqli->query($sql);
-    $oddShuffledMsg.= $result ? "warning: odd data collection has started " : "";
+    $result = $this->igrtSqli->query($sql);
+    $oddShuffledMsg.= $result->num_rows>0 ? "warning: odd data collection has started " : "";
     $selectJSON = $this->metadataConverter->getSelectJSONArray(1,200);
     $json = "{\"sectionTitle\": \"Step3 shuffle\",\"sectionName\": \"s3Shuffle\",\"exptId\":".$this->exptId.",\"formFields\":[";
       $pageWarning = "Note: the shuffle is performed when pressing `save and operate on changes`";
@@ -1902,9 +1875,8 @@ class experimentConfigurator {
   function getStep3SnowShuffle() {
     // initially, this snow shuffle is for a particular null experiment
     // but could be generalised later.
-    global $igrtSqli;
     $sql = sprintf("SELECT * FROM wt_Step4JudgeCounts WHERE exptId='%s'", $this->exptId);
-    $result = $igrtSqli->query($sql);
+    $result = $this->igrtSqli->query($sql);
     if ($result->num_rows > 0) {
       $row = $result->fetch_object();
       $evenS4JudgeCount = $row->evenS4JudgeCount;
@@ -1915,17 +1887,17 @@ class experimentConfigurator {
       $oddS4JudgeCount = 1;
     }
     $sql = sprintf("SELECT * FROM wt_Step4datasets WHERE exptId='%s' AND jType=0", $this->exptId);
-    $result = $igrtSqli->query($sql);
-    $evenShuffledMsg = $result ? "Even datasets have been shuffled" : "Even datasets have not been shuffled";
+    $result = $this->igrtSqli->query($sql);
+    $evenShuffledMsg = $result->num_rows>0 ? "Even datasets have been shuffled" : "Even datasets have not been shuffled";
     $sql = sprintf("SELECT * FROM wt_Step4datasets WHERE exptId='%s' AND jType=0 AND rated=1", $this->exptId);
-    $result = $igrtSqli->query($sql);
-    $evenShuffledMsg.= $result ? "warning: even data collection has started " : "";
+    $result = $this->igrtSqli->query($sql);
+    $evenShuffledMsg.= $result->num_rows>0 ? "warning: even data collection has started " : "";
     $sql = sprintf("SELECT * FROM wt_Step4datasets WHERE exptId='%s' AND jType=1", $this->exptId);
-    $result = $igrtSqli->query($sql);
-    $oddShuffledMsg = $result ? "Odd datasets have been shuffled" : "Odd datasets have not been shuffled";
+    $result = $this->igrtSqli->query($sql);
+    $oddShuffledMsg = $result->num_rows>0 ? "Odd datasets have been shuffled" : "Odd datasets have not been shuffled";
     $sql = sprintf("SELECT * FROM wt_Step4datasets WHERE exptId='%s' AND jType=1 AND rated=1", $this->exptId);
-    $result = $igrtSqli->query($sql);
-    $oddShuffledMsg.= $result ? "warning: odd data collection has started " : "";
+    $result = $this->igrtSqli->query($sql);
+    $oddShuffledMsg.= $result->num_rows>0 ? "warning: odd data collection has started " : "";
     $selectJSON = $this->metadataConverter->getSelectJSONArray(1,200);
     $json = "{\"sectionTitle\": \"snow shuffle\",\"sectionName\": \"snowShuffle\",\"exptId\":".$this->exptId.",\"formFields\":[";
       $pageWarning = "Note: the shuffle is performed when pressing `save and operate on changes`";
@@ -1942,9 +1914,8 @@ class experimentConfigurator {
   function getStep3LEShuffle() {
     // the linked Shuffle is used in experiments 327<->328 and 329<->330 where Step2 is bypassed,
     // and instead Step1 data is mixed from 2 experiments to form a Step4
-    global $igrtSqli;
     $sql = sprintf("SELECT * FROM wt_Step4JudgeCounts WHERE exptId='%s'", $this->exptId);
-    $result = $igrtSqli->query($sql);
+    $result = $this->igrtSqli->query($sql);
     if ($result->num_rows > 0) {
       $row = $result->fetch_object();
       $evenS4JudgeCount = $row->evenS4JudgeCount;
@@ -1956,17 +1927,17 @@ class experimentConfigurator {
     }    
     // use wt_LinkedStep4datasets table
     $sql = sprintf("SELECT * FROM wt_LinkedStep4datasets WHERE exptId='%s' AND jType=0", $this->exptId);
-    $result = $igrtSqli->query($sql);
-    $evenShuffledMsg = $result ? "Even datasets have been shuffled" : "Even datasets have not been shuffled";
+    $result = $this->igrtSqli->query($sql);
+    $evenShuffledMsg = $result->num_rows>0 ? "Even datasets have been shuffled" : "Even datasets have not been shuffled";
     $sql = sprintf("SELECT * FROM wt_LinkedStep4datasets WHERE exptId='%s' AND jType=0 AND rated=1", $this->exptId);
-    $result = $igrtSqli->query($sql);
-    $evenShuffledMsg.= $result ? "warning: even data collection has started " : "";
+    $result = $this->igrtSqli->query($sql);
+    $evenShuffledMsg.= $result->num_rows>0 ? "warning: even data collection has started " : "";
     $sql = sprintf("SELECT * FROM wt_LinkedStep4datasets WHERE exptId='%s' AND jType=1", $this->exptId);
-    $result = $igrtSqli->query($sql);
-    $oddShuffledMsg = $result ? "Odd datasets have been shuffled" : "Odd datasets have not been shuffled";
+    $result = $this->igrtSqli->query($sql);
+    $oddShuffledMsg = $result->num_rows>0 ? "Odd datasets have been shuffled" : "Odd datasets have not been shuffled";
     $sql = sprintf("SELECT * FROM wt_LinkedStep4datasets WHERE exptId='%s' AND jType=1 AND rated=1", $this->exptId);
-    $result = $igrtSqli->query($sql);
-    $oddShuffledMsg.= $result ? "warning: odd data collection has started " : "";
+    $result = $this->igrtSqli->query($sql);
+    $oddShuffledMsg.= $result->num_rows>0 ? "warning: odd data collection has started " : "";
     $selectJSON = $this->metadataConverter->getSelectJSONArray(1,200);
     $json = "{\"sectionTitle\": \"linked experiment shuffle\",\"sectionName\": \"leShuffle\",\"exptId\":".$this->exptId.",\"formFields\":[";
       $pageWarning = "Note: the shuffle is performed when pressing `save and operate on changes`";
@@ -1984,9 +1955,8 @@ class experimentConfigurator {
     // the linked TBT Shuffle is used in experiments 327<->328 and 329<->330 where Step2 is bypassed,
     // and instead Step1 data is mixed from 4 experiments to form a Step4
     // and this is a special case where reflexive (turn-by-turn) judging is used
-    global $igrtSqli;
     $sql = sprintf("SELECT * FROM wt_Step4JudgeCounts WHERE exptId='%s'", $this->exptId);
-    $result = $igrtSqli->query($sql);
+    $result = $this->igrtSqli->query($sql);
     if ($result->num_rows > 0) {
       $row = $result->fetch_object();
       $evenS4JudgeCount = $row->evenS4JudgeCount;
@@ -1998,17 +1968,17 @@ class experimentConfigurator {
     }    
     // use wt_LinkedStep4datasets table
     $sql = sprintf("SELECT * FROM wt_LinkedTBTStep4datasets WHERE exptId='%s' AND jType=0", $this->exptId);
-    $result = $igrtSqli->query($sql);
-    $evenShuffledMsg = $result ? "Even datasets have been shuffled" : "Even datasets have not been shuffled";
+    $result = $this->igrtSqli->query($sql);
+    $evenShuffledMsg = $result->num_rows>0 ? "Even datasets have been shuffled" : "Even datasets have not been shuffled";
     $sql = sprintf("SELECT * FROM wt_LinkedTBTStep4datasets WHERE exptId='%s' AND jType=0 AND rated=1", $this->exptId);
-    $result = $igrtSqli->query($sql);
-    $evenShuffledMsg.= $result ? "warning: even data collection has started " : "";
+    $result = $this->igrtSqli->query($sql);
+    $evenShuffledMsg.= $result->num_rows>0 ? "warning: even data collection has started " : "";
     $sql = sprintf("SELECT * FROM wt_LinkedTBTStep4datasets WHERE exptId='%s' AND jType=1", $this->exptId);
-    $result = $igrtSqli->query($sql);
-    $oddShuffledMsg = $result ? "Odd datasets have been shuffled" : "Odd datasets have not been shuffled";
+    $result = $this->igrtSqli->query($sql);
+    $oddShuffledMsg = $result->num_rows>0 ? "Odd datasets have been shuffled" : "Odd datasets have not been shuffled";
     $sql = sprintf("SELECT * FROM wt_LinkedTBTStep4datasets WHERE exptId='%s' AND jType=1 AND rated=1", $this->exptId);
-    $result = $igrtSqli->query($sql);
-    $oddShuffledMsg.= $result ? "warning: odd data collection has started " : "";
+    $result = $this->igrtSqli->query($sql);
+    $oddShuffledMsg.= $result->num_rows>0 ? "warning: odd data collection has started " : "";
     $selectJSON = $this->metadataConverter->getSelectJSONArray(1,200);
     $json = "{\"sectionTitle\": \"linked TBT experiment shuffle\",\"sectionName\": \"tbtShuffle\",\"exptId\":".$this->exptId.",\"formFields\":[";
       $pageWarning = "Note: the shuffle is performed when pressing `save and operate on changes`";
@@ -2023,15 +1993,14 @@ class experimentConfigurator {
   }
   
   function getStep4Monitor() {
-    global $igrtSqli;
     $json = "{\"sectionTitle\": \"Step4 monitor\",\"sectionName\": \"s4Monitor\",\"exptId\":".$this->exptId.",\"formFields\":[";
     $index = 0; // incremented in makeXXXJSON methods
     $erQry = sprintf("SELECT * FROM wt_Step4datasets WHERE exptId='%s' AND jType=0", $this->exptId);
-    $erResult = $igrtSqli->query($erQry);
-    $hasEvenRaw = $erResult ? true : false;
+    $erResult = $this->igrtSqli->query($erQry);
+    $hasEvenRaw = $erResult->num_rows>0 ? true : false;
     $orQry = sprintf("SELECT * FROM wt_Step4datasets WHERE exptId='%s' AND jType=1", $this->exptId);
-    $orResult = $igrtSqli->query($orQry);
-    $hasOddRaw = $orResult ? true : false;
+    $orResult = $this->igrtSqli->query($orQry);
+    $hasOddRaw = $orResult->num_rows>0 ? true : false;
     if ($hasEvenRaw) {
       $evenMsg = "monitor even S4 judges";
       $json.= $this->makeFormFieldJSON($index, "pageWarning", "", "", $evenMsg, "", "", "",  "", "", "[]", false, [], [], "", "", "", "") . ",";
@@ -2055,15 +2024,14 @@ class experimentConfigurator {
   }
   
   function getNEMonitor() {
-    global $igrtSqli;
     $json = "{\"sectionTitle\": \"NE monitor\",\"sectionName\": \"neMonitor\",\"exptId\":".$this->exptId.",\"formFields\":[";
     $index = 0; // incremented in makeXXXJSON methods
     $erQry = sprintf("SELECT * FROM ne_Step4datasets WHERE exptId='%s' AND jType=0", $this->exptId);
-    $erResult = $igrtSqli->query($erQry);
-    $hasEvenRaw = $erResult ? true : false;
+    $erResult = $this->igrtSqli->query($erQry);
+    $hasEvenRaw = $erResult->num_rows>0 ? true : false;
     $orQry = sprintf("SELECT * FROM ne_Step4datasets WHERE exptId='%s' AND jType=1", $this->exptId);
-    $orResult = $igrtSqli->query($orQry);
-    $hasOddRaw = $orResult ? true : false;
+    $orResult = $this->igrtSqli->query($orQry);
+    $hasOddRaw = $orResult->num_rows>0 ? true : false;
     if ($hasEvenRaw) {
       $evenMsg = "monitor even NE judges";
       $json.= $this->makeFormFieldJSON($index, "pageWarning", "", "", $evenMsg, "", "", "",  "", "", "[]", false, [], [], "", "", "", "") . ",";
@@ -2087,12 +2055,11 @@ class experimentConfigurator {
   }
 
   function getLEMonitor() {
-    global $igrtSqli;
     $json = "{\"sectionTitle\": \"LE monitor\",\"sectionName\": \"leMonitor\",\"exptId\":".$this->exptId.",\"formFields\":[";
     $index = 0; // incremented in makeXXXJSON methods
     $erQry = sprintf("SELECT * FROM wt_LinkedStep4datasets WHERE exptId='%s' AND jType=0", $this->exptId);
-    $erResult = $igrtSqli->query($erQry);
-    $hasEvenRaw = $erResult ? true : false;
+    $erResult = $this->igrtSqli->query($erQry);
+    $hasEvenRaw = $erResult->num_rows>0 ? true : false;
     if ($hasEvenRaw) {
       $evenMsg = "monitor even LE judges";
       $json.= $this->makeFormFieldJSON($index, "pageWarning", "", "", $evenMsg, "", "", "",  "", "", "[]", false, [], [], "", "", "", "") . ",";
@@ -2107,12 +2074,11 @@ class experimentConfigurator {
   }
 
   function getTBTMonitor() {
-    global $igrtSqli;
     $json = "{\"sectionTitle\": \"TBT monitor\",\"sectionName\": \"tbtMonitor\",\"exptId\":".$this->exptId.",\"formFields\":[";
     $index = 0; // incremented in makeXXXJSON methods
     $erQry = sprintf("SELECT * FROM wt_LinkedStep4datasets WHERE exptId='%s' AND jType=0", $this->exptId);
-    $erResult = $igrtSqli->query($erQry);
-    $hasEvenRaw = $erResult ? true : false;
+    $erResult = $this->igrtSqli->query($erQry);
+    $hasEvenRaw = $erResult->num_rows>0 ? true : false;
     if ($hasEvenRaw) {
       $evenMsg = "monitor even LE judges";
       $json.= $this->makeFormFieldJSON($index, "pageWarning", "", "", $evenMsg, "", "", "",  "", "", "[]", false, [], [], "", "", "", "") . ",";
@@ -2127,41 +2093,44 @@ class experimentConfigurator {
   }
 
 	function getStep1Dialogues() {
-		global $igrtSqli;
 		$json = "{\"sectionTitle\": \"Step1 dialogues\",\"sectionName\": \"s1Dialogues\",\"exptId\":".$this->exptId.",\"formFields\":[";
 		$index = 0; // incremented in makeXXXJSON methods
 		$dayList = [];
 		$dQry = sprintf("SELECT DISTINCT(dayNo) FROM edSessions WHERE exptId='%s'", $this->exptId);
-		$dResult = $igrtSqli->query($dQry);
+		$dResult = $this->igrtSqli->query($dQry);
 		if ($dResult->num_rows >0) {
 			while ($dRow = $dResult->fetch_object()) {
 				$dayNo = $dRow->dayNo;
 				$sQry = sprintf("SELECT DISTINCT(sessionNo) FROM edSessions WHERE exptId='%s' AND dayNo='%s'", $this->exptId, $dayNo);
-				$sResult = $igrtSqli->query($sQry);
+				$sResult = $this->igrtSqli->query($sQry);
 				$sessionList = [];
 				if ($sResult->num_rows >0) {
 					while ($sRow = $sResult->fetch_object()) {
 						$sessionNo = $sRow->sessionNo;
 						$sessionStatus = ['hasEvenMarked'=>false, 'hasOddMarked'=>false, 'hasEvenUnmarked'=>false, 'hasOddUnmarked'=>false];
 						$markedQry = sprintf("SELECT * FROM md_dataStep1reviewed WHERE exptId='%s' AND dayNo='%s' AND sessionNo='%s' AND jType=0", $this->exptId, $dayNo, $sessionNo);
-						$mResult = $igrtSqli->query($markedQry);
+						$mResult = $this->igrtSqli->query($markedQry);
 						if ($mResult->num_rows > 0) {
 							$sessionStatus['hasEvenMarked'] = true;
 						}
 						else {
 							$unmarkedQry = sprintf("SELECT * FROM dataSTEP1 WHERE exptId='%s' AND dayNo='%s' AND sessionNo='%s' AND jType=0", $this->exptId, $dayNo, $sessionNo);
-							$uResult = $igrtSqli->query($unmarkedQry);
-							if ($uResult->num_rows > 0) { $sessionStatus['hasEvenUnmarked'] = true; }
+							$uResult = $this->igrtSqli->query($unmarkedQry);
+							if ($uResult->num_rows > 0) {
+                $sessionStatus['hasEvenUnmarked'] = true;
+              }
 						}
 						$markedQry = sprintf("SELECT * FROM md_dataStep1reviewed WHERE exptId='%s' AND dayNo='%s' AND sessionNo='%s' AND jType=1", $this->exptId, $dayNo, $sessionNo);
-						$mResult = $igrtSqli->query($markedQry);
+						$mResult = $this->igrtSqli->query($markedQry);
 						if ($mResult->num_rows >0) {
 							$sessionStatus['hasOddMarked'] = true;
 						}
 						else {
 							$unmarkedQry = sprintf("SELECT * FROM dataSTEP1 WHERE exptId='%s' AND dayNo='%s' AND sessionNo='%s' AND jType=1", $this->exptId, $dayNo, $sessionNo);
-							$uResult = $igrtSqli->query($unmarkedQry);
-							if ($uResult->num_rows > 0) { $sessionStatus['hasOddUnmarked'] = true; }
+							$uResult = $this->igrtSqli->query($unmarkedQry);
+							if ($uResult->num_rows > 0) {
+                $sessionStatus['hasOddUnmarked'] = true;
+              }
 						}
 						array_push($sessionList, $sessionStatus);
 					}
@@ -2211,21 +2180,20 @@ class experimentConfigurator {
 	}
 
   function getStep2pAnswerSets() {
-    global $igrtSqli;
     $json = "{\"sectionTitle\": \"Step2 P answer sets\",\"sectionName\": \"s2pAS\",\"exptId\":".$this->exptId.",\"formFields\":[";
     $index = 0; // incremented in makeXXXJSON methods
     $erQry = sprintf("SELECT * FROM dataSTEP2 WHERE exptId='%s' AND jType=0", $this->exptId);
-    $erResult = $igrtSqli->query($erQry);
-    $hasEvenRaw = $erResult ? true : false;
+    $erResult = $this->igrtSqli->query($erQry);
+    $hasEvenRaw = $erResult->num_rows>0 ? true : false;
     $emQry = sprintf("SELECT * FROM md_dataStep2reviewed WHERE exptId='%s' AND jType=0", $this->exptId);
-    $emResult = $igrtSqli->query($emQry);
-    $hasEvenMarked = $emResult ? true : false;
+    $emResult = $this->igrtSqli->query($emQry);
+    $hasEvenMarked = $emResult->num_rows>0 ? true : false;
     $orQry = sprintf("SELECT * FROM dataSTEP2 WHERE exptId='%s' AND jType=1", $this->exptId);
-    $orResult = $igrtSqli->query($orQry);
-    $hasOddRaw = $orResult ? true : false;
+    $orResult = $this->igrtSqli->query($orQry);
+    $hasOddRaw = $orResult->num_rows>0 ? true : false;
     $omQry = sprintf("SELECT * FROM md_dataStep2reviewed WHERE exptId='%s' AND jType=1", $this->exptId);
-    $omResult = $igrtSqli->query($omQry);
-    $hasOddMarked = $omResult ? true : false;
+    $omResult = $this->igrtSqli->query($omQry);
+    $hasOddMarked = $omResult->num_rows>0 ? true : false;
     //$json.=$emQry.';'.$erQry.';'.$omQry.';'.$orQry.';';
     if (($hasEvenRaw) || ($hasEvenMarked)) {
       $evenMsg = ($hasEvenMarked) ? "show marked even S2 Pretenders" : "show unmarked even S2 Pretenders";
@@ -2250,21 +2218,20 @@ class experimentConfigurator {
   }
   
   function getStep2npAnswerSets() {
-    global $igrtSqli;
     $json = "{\"sectionTitle\": \"Inv Step2 NP answer sets\",\"sectionName\": \"is2npAS\",\"exptId\":".$this->exptId.",\"formFields\":[";
     $index = 0; // incremented in makeXXXJSON methods
     $erQry = sprintf("SELECT * FROM dataSTEP2inverted WHERE exptId='%s' AND jType=0", $this->exptId);
-    $erResult = $igrtSqli->query($erQry);
-    $hasEvenRaw = $erResult ? true : false;
+    $erResult = $this->igrtSqli->query($erQry);
+    $hasEvenRaw = $erResult->num_rows>0 ? true : false;
     $emQry = sprintf("SELECT * FROM md_invertedStep2reviewed WHERE exptId='%s' AND jType=0", $this->exptId);
-    $emResult = $igrtSqli->query($emQry);
-    $hasEvenMarked = $emResult ? true : false;
+    $emResult = $this->igrtSqli->query($emQry);
+    $hasEvenMarked = $emResult->num_rows>0 ? true : false;
     $orQry = sprintf("SELECT * FROM dataSTEP2inverted WHERE exptId='%s' AND jType=1", $this->exptId);
-    $orResult = $igrtSqli->query($orQry);
-    $hasOddRaw = $orResult ? true : false;
+    $orResult = $this->igrtSqli->query($orQry);
+    $hasOddRaw = $orResult->num_rows>0 ? true : false;
     $omQry = sprintf("SELECT * FROM md_invertedStep2reviewed WHERE exptId='%s' AND jType=1", $this->exptId);
-    $omResult = $igrtSqli->query($omQry);
-    $hasOddMarked = $omResult ? true : false;
+    $omResult = $this->igrtSqli->query($omQry);
+    $hasOddMarked = $omResult->num_rows>0 ? true : false;
     //$json.=$emQry.';'.$erQry.';'.$omQry.';'.$orQry.';';
     if (($hasEvenRaw) || ($hasEvenMarked)) {
       $evenMsg = ($hasEvenMarked) ? "show marked even iS2 Non-Pretenders" : "show unmarked even iS2 Non-Pretenders";
@@ -2289,15 +2256,14 @@ class experimentConfigurator {
   }
   
   function getAuditReport() {
-    global $igrtSqli;
     $json = "{\"sectionTitle\": \"Audit report\",\"sectionName\": \"auditReport\",\"exptId\":".$this->exptId.",\"formFields\":[";
     $index = 0; // incremented in makeXXXJSON methods
     $pptQry = sprintf("SELECT * FROM wt_Step2pptStatus WHERE exptId='%s' AND jType='0' AND (discarded=1 OR finished=1)", $this->exptId);
-    $pptResult = $igrtSqli->query($pptQry);
-    $hasEven = $pptResult ? true : false;
+    $pptResult = $this->igrtSqli->query($pptQry);
+    $hasEven = $pptResult->num_rows>0 ? true : false;
     $pptQry = sprintf("SELECT * FROM wt_Step2pptStatus WHERE exptId='%s' AND jType='1' AND (discarded=1 OR finished=1)", $this->exptId);
-    $pptResult = $igrtSqli->query($pptQry);
-    $hasOdd = $pptResult ? true : false;
+    $pptResult = $this->igrtSqli->query($pptQry);
+    $hasOdd = $pptResult->num_rows>0 ? true : false;
     if ($hasEven) {
       $evenMsg = "even S2 audit data available";
       $json.= $this->makeFormFieldJSON($index, "pageWarning", "", "", $evenMsg, "", "", "",  "", "", "[]", false, [], [], "", "", "", "") . ",";
@@ -2321,15 +2287,14 @@ class experimentConfigurator {
   }
   
   function getStep4QuantitativeData() {
-    global $igrtSqli;
     $json = "{\"sectionTitle\": \"Step4 quantitative data\",\"sectionName\": \"s4Quant\",\"exptId\":".$this->exptId.",\"formFields\":[";
     $index = 0; // incremented in makeXXXJSON methods
     $erQry = sprintf("SELECT * FROM dataSTEP4 WHERE exptId='%s' AND jType=0", $this->exptId);
-    $erResult = $igrtSqli->query($erQry);
-    $hasEvenRaw = $erResult ? true : false;
+    $erResult = $this->igrtSqli->query($erQry);
+    $hasEvenRaw = $erResult->num_rows>0 ? true : false;
     $orQry = sprintf("SELECT * FROM dataSTEP4 WHERE exptId='%s' AND jType=1", $this->exptId);
-    $orResult = $igrtSqli->query($orQry);
-    $hasOddRaw = $orResult ? true : false;
+    $orResult = $this->igrtSqli->query($orQry);
+    $hasOddRaw = $orResult->num_rows>0 ? true : false;
     if ($hasEvenRaw) {
       $evenMsg = "download even S4 judges";
       $json.= $this->makeFormFieldJSON($index, "pageWarning", "", "", $evenMsg, "", "", "",  "", "", "[]", false, [], [], "", "", "", "") . ",";
@@ -2353,15 +2318,14 @@ class experimentConfigurator {
   }
   
   function getStep4QualitativeData() {
-    global $igrtSqli;
     $json = "{\"sectionTitle\": \"Step4 qualitative data\",\"sectionName\": \"s4Qual\",\"exptId\":".$this->exptId.",\"formFields\":[";
     $index = 0; // incremented in makeXXXJSON methods
     $erQry = sprintf("SELECT * FROM dataSTEP4 WHERE exptId='%s' AND jType=0", $this->exptId);
-    $erResult = $igrtSqli->query($erQry);
-    $hasEvenRaw = $erResult ? true : false;
+    $erResult = $this->igrtSqli->query($erQry);
+    $hasEvenRaw = $erResult->num_rows>0 ? true : false;
     $orQry = sprintf("SELECT * FROM dataSTEP4 WHERE exptId='%s' AND jType=1", $this->exptId);
-    $orResult = $igrtSqli->query($orQry);
-    $hasOddRaw = $orResult ? true : false;
+    $orResult = $this->igrtSqli->query($orQry);
+    $hasOddRaw = $orResult->num_rows>0 ? true : false;
     if ($hasEvenRaw) {
       $evenMsg = "download even S4 judges";
       $json.= $this->makeFormFieldJSON($index, "pageWarning", "", "", $evenMsg, "", "", "",  "", "", "[]", false, [], [], "", "", "", "") . ",";
@@ -2385,15 +2349,14 @@ class experimentConfigurator {
   }
   
   function getNEQuantitativeData() {
-    global $igrtSqli;
     $json = "{\"sectionTitle\": \"NE quantitative data\",\"sectionName\": \"neQuant\",\"exptId\":".$this->exptId.",\"formFields\":[";
     $index = 0; // incremented in makeXXXJSON methods
     $erQry = sprintf("SELECT * FROM ne_dataSTEP4 WHERE exptId='%s' AND jType=0", $this->exptId);
-    $erResult = $igrtSqli->query($erQry);
-    $hasEvenRaw = $erResult ? true : false;
+    $erResult = $this->igrtSqli->query($erQry);
+    $hasEvenRaw = $erResult->num_rows>0 ? true : false;
     $orQry = sprintf("SELECT * FROM ne_dataSTEP4 WHERE exptId='%s' AND jType=1", $this->exptId);
-    $orResult = $igrtSqli->query($orQry);
-    $hasOddRaw = $orResult ? true : false;
+    $orResult = $this->igrtSqli->query($orQry);
+    $hasOddRaw = $orResult->num_rows>0 ? true : false;
     if ($hasEvenRaw) {
       $evenMsg = "download even S4 judges";
       $json.= $this->makeFormFieldJSON($index, "pageWarning", "", "", $evenMsg, "", "", "",  "", "", "[]", false, [], [], "", "", "", "") . ",";
@@ -2417,15 +2380,14 @@ class experimentConfigurator {
   }
   
   function getNEQualitativeData() {
-    global $igrtSqli;
     $json = "{\"sectionTitle\": \"NE qualitative data\",\"sectionName\": \"neQual\",\"exptId\":".$this->exptId.",\"formFields\":[";
     $index = 0; // incremented in makeXXXJSON methods
     $erQry = sprintf("SELECT * FROM ne_dataSTEP4 WHERE exptId='%s' AND jType=0", $this->exptId);
-    $erResult = $igrtSqli->query($erQry);
-    $hasEvenRaw = $erResult ? true : false;
+    $erResult = $this->igrtSqli->query($erQry);
+    $hasEvenRaw = $erResult->num_rows>0 ? true : false;
     $orQry = sprintf("SELECT * FROM ne_dataSTEP4 WHERE exptId='%s' AND jType=1", $this->exptId);
-    $orResult = $igrtSqli->query($orQry);
-    $hasOddRaw = $orResult ? true : false;
+    $orResult = $this->igrtSqli->query($orQry);
+    $hasOddRaw = $orResult->num_rows>0 ? true : false;
     if ($hasEvenRaw) {
       $evenMsg = "download even S4 judges";
       $json.= $this->makeFormFieldJSON($index, "pageWarning", "", "", $evenMsg, "", "", "",  "", "", "[]", false, [], [], "", "", "", "") . ",";
@@ -2449,24 +2411,23 @@ class experimentConfigurator {
   }
 
 	function getClassicStep1Dialogues() {
-		global $igrtSqli;
 		$json = "{\"sectionTitle\": \"Classic Step1 dialogues\",\"sectionName\": \"classicS1Dialogues\",\"exptId\":".$this->exptId.",\"formFields\":[";
 		$index = 0; // incremented in makeXXXJSON methods
 		$dayList = [];
 		$dQry = sprintf("SELECT DISTINCT(dayNo) FROM edSessions WHERE exptId='%s'", $this->exptId);
-		$dResult = $igrtSqli->query($dQry);
+		$dResult = $this->igrtSqli->query($dQry);
 		if ($dResult->num_rows>0) {
 			while ($dRow = $dResult->fetch_object()) {
 				$dayNo = $dRow->dayNo;
 				$sQry = sprintf("SELECT DISTINCT(sessionNo) FROM edSessions WHERE exptId='%s' AND dayNo='%s'", $this->exptId, $dayNo);
-				$sResult = $igrtSqli->query($sQry);
-				$sessionList = [];
+        $sessionList = [];
+        $sResult = $this->igrtSqli->query($sQry);
 				if ($sResult->num_rows>0) {
 					while ($sRow = $sResult->fetch_object()) {
 						$sessionNo = $sRow->sessionNo;
 						$hasOwnersQry = sprintf("SELECT DISTINCT(owner) as owner FROM dataClassic WHERE exptId='%s' AND dayNo='%s' AND sessionNo='%s' ORDER BY owner ASC", $this->exptId, $dayNo, $sessionNo);
-						$mResult = $igrtSqli->query($hasOwnersQry);
-						$sessionStatus = $mResult ? true : false;
+						$mResult = $this->igrtSqli->query($hasOwnersQry);
+						$sessionStatus = $mResult->num_rows>0 ? true : false;
 						array_push($sessionList, $sessionStatus);
 					}
 				}
@@ -2502,16 +2463,15 @@ class experimentConfigurator {
 	}
 
 	function getExperimenterGroupOperations() {
-		global $igrtSqli;
 		$json = "{\"sectionTitle\": \"Experimenter group operations\",\"sectionName\": \"egOperations\",\"exptId\":".$this->exptId.",\"formFields\":[";
 		$index = 0; // incremented in makeXXXJSON methods
 
 		$egsQry = "SELECT * FROM igExperimentGroups";
-		$egsResult = $igrtSqli->query($egsQry);
+		$egsResult = $this->igrtSqli->query($egsQry);
 		while ($row = $egsResult->fetch_object()) {
 
 			$mappingsQry = sprintf("SELECT * FROM igExperimentGroupMappings WHERE exptID='%s' AND groupId='%s'", $this->exptId, $row->id);
-			$mappingsResult = $igrtSqli->query($mappingsQry);
+			$mappingsResult = $this->igrtSqli->query($mappingsQry);
 			$mappingsRow = $mappingsResult->fetch_object();
 			$isSelected = $mappingsRow == null ? false : true;
 
@@ -2529,20 +2489,18 @@ class experimentConfigurator {
 // <editor-fold defaultstate="collapsed" desc=" experiment definitions & controls">
 
   function createExperiment($uid, $exptName) {
-    global $igrtSqli;
-    $sqlCmd_createExpt=sprintf("INSERT INTO igExperiments (title, ownerId) VALUES('%s','%s')", $igrtSqli->real_escape_string($exptName), $uid);
-    $igrtSqli->query($sqlCmd_createExpt);
-    $exptId = $igrtSqli->insert_id;
+    $sqlCmd_createExpt=sprintf("INSERT INTO igExperiments (title, ownerId) VALUES('%s','%s')", $this->igrtSqli->real_escape_string($exptName), $uid);
+    $this->igrtSqli->query($sqlCmd_createExpt);
+    $exptId = $this->igrtSqli->insert_id;
     $sqlCmd_createExpt=sprintf("INSERT INTO edExptStatic_refactor (exptId, owner) VALUES('%s','%s')", $exptId, $uid);
-    $igrtSqli->query($sqlCmd_createExpt);   
+    $this->igrtSqli->query($sqlCmd_createExpt);
     return $this->sendExptSummary($uid);
   }
   
   function cloneExperiment($uid, $exptId, $newName) {
-    global $igrtSqli;    
     $qry ="CALL cloneExperiment($uid,$exptId,'$newName',@neid)";
-    $igrtSqli->query($qry);
-    $sr2 = $igrtSqli->query("SELECT @neid as myVAR");
+    $this->igrtSqli->query($qry);
+    $sr2 = $this->igrtSqli->query("SELECT @neid as myVAR");
     if ($sr2->num_rows >0) {
       $row = $sr2->fetch_object();
       $newExptId = $row->myVAR;   
@@ -2554,7 +2512,7 @@ class experimentConfigurator {
     } 
     else {
       $contentQry = "CALL populateContent($exptId)";
-      $igrtSqli->query($contentQry);
+      $this->igrtSqli->query($contentQry);
       $json.= "\"statusMsg\":\"success\",";
       $json.= "\"newExptId\":\"". $newExptId."\"";
     }
@@ -2563,17 +2521,16 @@ class experimentConfigurator {
   }
 
   function deleteExperiment($exptId) {
-    global $igrtSqli;
     $qry=sprintf("CALL deleteExperiment(%s,@delCnt,@aRows)", $exptId);
-    $igrtSqli->query($qry);
+    $this->igrtSqli->query($qry);
     $ndelUsers = 0;
-    $sr = $igrtSqli->query("SELECT @delCnt as myVAR");
+    $sr = $this->igrtSqli->query("SELECT @delCnt as myVAR");
     if ($sr->num_rows>0) {
       $row = $sr->fetch_object();
       $ndelUsers = $row->myVAR;
     }
     $nArchivedRows = 0;
-    $sr2 = $igrtSqli->query("SELECT @aRows as myVAR");
+    $sr2 = $this->igrtSqli->query("SELECT @aRows as myVAR");
     if ($sr2->num_rows>0) {
       $row = $sr2->fetch_object();
       $nArchivedRows = $row->myVAR;
@@ -2759,9 +2716,8 @@ class experimentConfigurator {
   }
   
   function getStep1Users($exptId) {
-    global $igrtSqli;
-    $dsQry = sprintf("SELECT * FROM edExptStatic_refactor WHERE exptId='%s'", $exptId);
-    $dsResult = $igrtSqli->query($dsQry);
+//    $dsQry = sprintf("SELECT * FROM edExptStatic_refactor WHERE exptId='%s'", $exptId);
+//    $dsResult = $igrtSqli->query($dsQry);
     $daysArray = [];
     for ($i=1; $i<=$this->eModel->noDays; $i++) {
       $sessionsArray = [];
@@ -2772,8 +2728,8 @@ class experimentConfigurator {
               . "WHERE igActiveClassicUsers.exptId='%s' AND igActiveClassicUsers.dayNo='%s' AND igActiveClassicUsers.sessionNo='%s' "
               . "AND igActiveClassicUsers.uid=igActiveClassicUsersPW.uid ", $exptId, $i, $j);
           //echo $cQry;
-          $cResult = $igrtSqli->query($cQry);
           $userArray = [];
+          $cResult = $this->igrtSqli->query($cQry);
           if ($cResult->num_rows > 0) {
             //echo 'got classic users';
             while ($cRow = $cResult->fetch_object()) {
@@ -2793,7 +2749,7 @@ class experimentConfigurator {
               . "AND igActiveStep1Users.uid=igActiveStep1UsersPW.uid "
               . "ORDER BY igActiveStep1Users.jType ASC, igActiveStep1Users.jNo ASC", $exptId, $i, $j);
           //echo $jQry;
-          $jResult = $igrtSqli->query($jQry);
+          $jResult = $this->igrtSqli->query($jQry);
           if ($jResult->num_rows > 0) {
             //echo 'got non-classic users';
             $jCnt = $jResult->num_rows / 2;
@@ -2822,26 +2778,22 @@ class experimentConfigurator {
   }
   
   function getShuffleStatus($exptId) {
-    global $igrtSqli;
-    $shuffler = new shuffleControllerClass($igrtSqli, $exptId,  NULL, NULL);
+    $shuffler = new shuffleControllerClass($this->igrtSqli, $exptId,  NULL, NULL);
     return $shuffler->getShuffleJSON();
   }
   
   function getLEShuffleStatus($exptId) {
-    global $igrtSqli;
-    $shuffler = new shuffleControllerClass($igrtSqli, $exptId,  NULL, NULL);
+    $shuffler = new shuffleControllerClass($this->igrtSqli, $exptId,  NULL, NULL);
     return $shuffler->getLEShuffleJSON();    
   }
 
   function getTBTShuffleStatus($exptId) {
-    global $igrtSqli;
-    $shuffler = new shuffleControllerClass($igrtSqli, $exptId,  NULL, NULL);
+    $shuffler = new shuffleControllerClass($this->igrtSqli, $exptId,  NULL, NULL);
     return $shuffler->getTBTShuffleJSON();    
   }
   
   function getSnowShuffleStatus($exptId) {
-    global $igrtSqli;
-    $shuffler = new shuffleControllerClass($igrtSqli, $exptId,  NULL, NULL);
+    $shuffler = new shuffleControllerClass($this->igrtSqli, $exptId,  NULL, NULL);
     return $shuffler->getSnowShuffleJSON();    
   }
   
@@ -2858,29 +2810,32 @@ class experimentConfigurator {
 // <editor-fold defaultstate="collapsed" desc=" ctor">
 
   function getControlItems() {
-    global $igrtSqli;
-    // get all control values  
+    // get all control values
+    $retArray = [];
     $controlQry = "SELECT * FROM igControlTypes";
-    $controlResults = $igrtSqli->query($controlQry);
+    $controlResults = $this->igrtSqli->query($controlQry);
     if ($controlResults->num_rows>0) {
       while ($row = $controlResults->fetch_object()) {
         $controlDetail = array(
           'id' => $row->cValue,
           'label' => $row->cLabel
         );
-        array_push($this->formControlSelectOptions, $controlDetail);
+        array_push($retArray, $controlDetail);
       }
     }
+    return $retArray;
   }
   
-  function __construct($uid, $exptId) {
-    $this->getControlItems();
+  function __construct($_igrtSqli, $uid, $exptId) {
+    $this->igrtSqli = $_igrtSqli;
+    $this->exptId = $exptId;
+    $this->uid = $uid;
+    
+    $this->formControlSelectOptions = $this->getControlItems();
     $this->metadataConverter = new metadataConverter();
     if ($exptId > -1) {
       $this->eModel = new experimentModel($exptId);
     }
-    $this->exptId = $exptId;
-    $this->uid = $uid;
     $this->htmlBuilder = new htmlBuilder(); // currently still used for Step1 controller
     $this->_tabIndex = 0;
 	  $this->userPermissions = $this->getUserPermissions();

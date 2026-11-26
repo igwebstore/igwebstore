@@ -1,3 +1,3 @@
 <?php
-  $cliDomain = 'ig2.com';
+  $cliDomain = 'imitationgame.co.uk';
   

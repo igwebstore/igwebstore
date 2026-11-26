@@ -21,7 +21,7 @@ for ($dayPtr=$dayNo; $dayPtr<=$dayNo+1; $dayPtr++) {
 			$dayNo, $sessionNo);
 		//echo $groupSql.'<br/>';
 		$groupResult = $igrtSqli->query($groupSql);
-		if ($groupResult) {
+		if ($groupResult->num_rows>0) {
 			while ($groupRow = $groupResult->fetch_object()) {
 				$owner = $groupRow->owner;
 				$getUserIdSql = sprintf("SELECT * FROM igUsers WHERE id='%s'", $owner);
@@ -34,7 +34,7 @@ for ($dayPtr=$dayNo; $dayPtr<=$dayNo+1; $dayPtr++) {
 					$dayNo, $sessionNo, $owner);
 				//echo $turnsSql.'<br/>';
 				$turnResult = $igrtSqli->query($turnsSql);
-				if ($turnResult) {
+				if ($turnResult->num_rows>0) {
 					$turnNo = 1;
 					while ($turnRow = $turnResult->fetch_object()) {
 						$owner = $turnRow->owner;

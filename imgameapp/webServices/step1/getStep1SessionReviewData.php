@@ -25,7 +25,7 @@ function getDataStatus($exptId, $jType, $dayNo, $sessionNo) {
   $statusArray = [];
   $qry = sprintf("SELECT * FROM edSessions WHERE exptId='%s' AND dayNo='%s' AND sessionNo='%s'", $exptId, $dayNo, $sessionNo);
   $result = $igrtSqli->query($qry);
-  if ($result) {
+  if ($result->num_rows>0) {
     $row = $result->fetch_object();
     // note that injected experiments may have data in the reviewed data tables but not the raw data tables
     $markedDataQry = sprintf("SELECT * FROM md_dataStep1reviewed WHERE exptId='%s' AND jType='%s' AND dayNo='%s' AND sessionNo='%s'", $exptId, $jType, $dayNo, $sessionNo);
@@ -53,7 +53,7 @@ function getDiscardInfo($exptId, $jType, $dayNo, $sessionNo) {
   $discards = 0;
   $getSummary = sprintf("SELECT * FROM wt_Step1Discards WHERE exptId='%s' AND dayNo='%s' AND sessionNo='%s'", $exptId, $dayNo, $sessionNo);
   $summaryResults = $igrtSqli->query($getSummary);
-  if ($summaryResults) {
+  if ($summaryResults->num_rows>0) {
     $summaryRow = $summaryResults->fetch_object();
     $discards = ($jType == 0) ? $summaryRow->evenDiscards : $summaryRow->oddDiscards;
   }
@@ -99,7 +99,7 @@ function getInterrogatorInfo($statusArray, $exptId, $jType, $dayNo, $sessionNo) 
       $reviewedSource = 1;
     }
     $jResult = $igrtSqli->query($sqlGetData);
-    if ($jResult) {
+    if ($jResult->num_rows>0) {
       $i=0;
       while ($row = $jResult->fetch_object()) {
         if (($row->q=="FINAL") && ($row->npr=="FINAL") && ($row->pr=="FINAL")) {

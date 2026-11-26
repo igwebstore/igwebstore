@@ -79,7 +79,7 @@ if ($permissions>=128) {
 							$exptId, $jType, $s4jNo, $actualJNo, $qNo);
 						//echo $getRatingQry.'<br />';
 						$ratingResult = $igrtSqli->query($getRatingQry);
-						if ($ratingResult) {
+						if ($ratingResult->num_rows>0) {
 							++$ratedCount;
 							$ratingRow = $ratingResult->fetch_object();
 							$correct = $ratingRow->correct;
@@ -164,7 +164,7 @@ if ($permissions>=128) {
 						$exptId, $jType, $s4jNo, $actualJNo);
 					//echo $getRatingQry.'<br />';
 					$ratingResult = $igrtSqli->query($getRatingQry);
-					if ($ratingResult) {
+					if ($ratingResult->num_rows>0) {
 						$ratingRow = $ratingResult->fetch_object();
 						$correct = $ratingRow->correct;
 						$confidence = $ratingRow->confidence;

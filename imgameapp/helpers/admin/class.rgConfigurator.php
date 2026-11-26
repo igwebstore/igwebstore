@@ -4,21 +4,20 @@
 ini_set('display_errors', 'On');
 error_reporting(E_ALL);
 if (!isset($root_path)) { $root_path = $_SERVER['DOCUMENT_ROOT']; }
-include_once $root_path.'/domainSpecific/mySqlObject.php';
 include_once $root_path.'/helpers/parseJSON.php';
 include_once $root_path.'/helpers/admin/class.userManagement.php';
 include_once $root_path.'/helpers/admin/enums.php';
 
 class rgConfigurator {
 	public $userManager;
-
+  private $igrtSqli;
 	private $rgID;
 	private $uid;
 	private $permissions;
 	private $userPermissions; // complex object with lists of different permission views
 	private $systemUsers;     // list of system users which may be required in some functions
 
-	// <editor-fold defaultstate="collapsed" desc=" private members to create json as required for registrationViews">
+	// <editor-fold defaultstate="collapsed" desc=" private members to create json as required for pages">
 
 	private function AddExperimentNames($filteredEGs) {
 		$allExperimentDefinitions = $this->GetExperimentDefinitions();
@@ -54,17 +53,15 @@ class rgConfigurator {
 	}
 
 	private function GetExperimentDefinitions() {
-		global $igrtSqli;
 		$exptQry = "SELECT exptId, title FROM igExperiments ORDER BY exptId DESC";
-		$exptResult = $igrtSqli->query($exptQry);
+		$exptResult = $this->igrtSqli->query($exptQry);
 		return $exptResult->fetch_all(MYSQLI_ASSOC);
 	}
 
 	private function GetAllExperimentIDs() {
-		global $igrtSqli;
 		$expts = [];
 		$qry = "SELECT exptId FROM igExperiments order by exptId ASC";
-		$qryResult = $igrtSqli->query($qry);
+		$qryResult = $this->igrtSqli->query($qry);
 		while($row = $qryResult->fetch_object()) {
 			array_push($expts, $row->exptId);
 		}
@@ -72,9 +69,8 @@ class rgConfigurator {
 	}
 
 	private function GetExperimentsForGroups() {
-		global $igrtSqli;
 		$groupQry = "SELECT gt.id, gt.GroupName, et.exptId FROM igExperimentGroups as gt LEFT JOIN igExperimentGroupMappings as et ON gt.id = et.groupId ORDER BY gt.id ASC, et.exptId DESC";
-		$groupResult = $igrtSqli->query($groupQry);
+		$groupResult = $this->igrtSqli->query($groupQry);
 		return $groupResult->fetch_all(MYSQLI_ASSOC);
 	}
 
@@ -104,16 +100,15 @@ class rgConfigurator {
 	}
 
 	private function GetUIStatus($groupId) {
-		global $igrtSqli;
 		$uiQry = sprintf("SELECT * FROM ui_exptGroup2UserMappings WHERE uid='%s' AND groupId='%s'", $this->uid, $groupId);
-		$uiResult = $igrtSqli->query($uiQry);
+		$uiResult = $this->igrtSqli->query($uiQry);
 		if ($uiResult) {
 			$uiRow = $uiResult->fetch_object();
 			return $uiRow->isClosed == 1;
 		}
 		else {
 			$uiInsert = sprintf("INSERT INTO ui_exptGroup2UserMappings (uid, groupId, isClosed) VALUES('%s', '%s', '1')", $this->uid, $groupId);
-			$igrtSqli->query($uiInsert);
+			$this->igrtSqli->query($uiInsert);
 			return true;
 		}
 	}
@@ -132,50 +127,45 @@ class rgConfigurator {
 	// <editor-fold defaultstate="collapsed" desc=" ctor and public interfaces">
 
 	public function UpdateGroupName($content) {
-		global $igrtSqli;
 		$update = sprintf("UPDATE igExperimentGroups SET GroupName='%s' WHERE id = '%s'", $content[1], $content[0]);
-		$igrtSqli->query($update);
+		$this->igrtSqli->query($update);
 	}
 
 	public function InsertGroupName($content) {
-		global $igrtSqli;
 		$insert = sprintf("INSERT INTO igExperimentGroups (GroupName) VALUES('%s')", $content[0]);
-		$igrtSqli->query($insert);
+		$this->igrtSqli->query($insert);
 	}
 
 	public function UpdateMapping($content) {
-		global $igrtSqli;
 		if ($content[2] == 1) {
 			$insertSql = sprintf("INSERT INTO igExperimentGroupMappings (groupId, exptId) VALUES('%s', '%s')", $content[0], $content[1]);
-			$igrtSqli->query($insertSql);
+			$this->igrtSqli->query($insertSql);
 		}
 		else {
 			$deleteSql = sprintf("DELETE FROM igExperimentGroupMappings WHERE groupId = '%s' AND exptId = '%s'", $content[0], $content[1]);
-			$igrtSqli->query($deleteSql);
+			$this->igrtSqli->query($deleteSql);
 		}
 	}
 
 	public function UpdateMembership($content) {
-		global $igrtSqli;
 		if ($content[2] == 1) {
 			$insertSql = sprintf("INSERT INTO igExperimentGroupMembers (groupId, userId) VALUES('%s', '%s')", $content[0], $content[1]);
-			$igrtSqli->query($insertSql);
+			$this->igrtSqli->query($insertSql);
 		}
 		else {
 			$deleteSql = sprintf("DELETE FROM igExperimentGroupMembers WHERE groupId = '%s' AND userId = '%s'", $content[0], $content[1]);
-			$igrtSqli->query($deleteSql);
+			$this->igrtSqli->query($deleteSql);
 		}
 	}
 
 	public function UpdateExperimentMapping($content) {
-		global $igrtSqli;
 		if ($content[2] == 1) {
 			$insertSql = sprintf("INSERT INTO igExperimentUserMembers (exptId, userId) VALUES('%s', '%s')", $content[0], $content[1]);
-			$igrtSqli->query($insertSql);
+			$this->igrtSqli->query($insertSql);
 		}
 		else {
 			$deleteSql = sprintf("DELETE FROM igExperimentUserMembers WHERE exptId = '%s' AND userId = '%s'", $content[0], $content[1]);
-			$igrtSqli->query($deleteSql);
+			$this->igrtSqli->query($deleteSql);
 		}
 	}
 
@@ -233,12 +223,11 @@ class rgConfigurator {
 	}
 
 	public function GetExperimentGroups($returnType) {
-		global $igrtSqli;
 		$experimentgroups = new stdClass();
 		$experimentgroups->groups = [];
 
 		$groupsSql = "SELECT * FROM igExperimentGroups";
-		$groupsResult = $igrtSqli->query($groupsSql);
+		$groupsResult = $this->igrtSqli->query($groupsSql);
 		while ($groupRow = $groupsResult->fetch_object()) {
 			array_push($experimentgroups->groups, ['id' => $groupRow->id, 'groupname' => $groupRow->GroupName]);
 		}
@@ -247,11 +236,9 @@ class rgConfigurator {
 	}
 
 	public function GetGroupMemberships($returnType) {
-		global $igrtSqli;
-
 		$memberships = [];
 		$groupsQry = "SELECT * FROM igExperimentGroups";
-		$groupsResult = $igrtSqli->query($groupsQry);
+		$groupsResult = $this->igrtSqli->query($groupsQry);
 		while ($groupsRow = $groupsResult->fetch_object()) {
 			$membership = new stdClass();
 			$membership->id = $groupsRow->id;
@@ -260,7 +247,7 @@ class rgConfigurator {
 			$membership->nonmembers = [];
 
 			$membersQry = sprintf("SELECT * FROM igExperimentGroupMembers WHERE groupId = '%s'", $groupsRow->id);
-			$membersResult = $igrtSqli->query($membersQry);
+			$membersResult = $this->igrtSqli->query($membersQry);
 			while ($memberRow = $membersResult->fetch_object()) {
 				array_push($membership->members, ['id' => $memberRow->userId, 'email' => $this->GetEmailFromSystemUser($memberRow->userId) ]);
 			}
@@ -280,10 +267,9 @@ class rgConfigurator {
 	}
 
 	public function GetExperimentMemberships($returnType) {
-		global $igrtSqli;
 		$experiments = [];
 		$exptSql = "SELECT * FROM igExperiments";
-		$exptResult = $igrtSqli->query($exptSql);
+		$exptResult = $this->igrtSqli->query($exptSql);
 		while ($exptRow = $exptResult->fetch_object()) {
 			$expt = new stdClass();
 			$expt->id = $exptRow->exptId;
@@ -292,7 +278,7 @@ class rgConfigurator {
 			$expt->nonmembers = [];
 
 			$userSql = sprintf("SELECT * FROM igExperimentUserMembers WHERE exptId = '%s'", $exptRow->exptId);
-			$userResult = $igrtSqli->query($userSql);
+			$userResult = $this->igrtSqli->query($userSql);
 			while ($userRow = $userResult->fetch_object()) {
 				array_push($expt->members, ['id'=>$userRow->userId, 'email' => $this->GetEmailFromSystemUser($userRow->userId)] );
 			}
@@ -316,7 +302,8 @@ class rgConfigurator {
 	}
 
 
-	public function __construct($uid, $rgID, $permissions) {
+	public function __construct($igrtSqli, $uid, $rgID, $permissions) {
+    $this->igrtSqli = $igrtSqli;
 		$this->rgID = $rgID;
 		$this->uid = $uid;
 		$this->permissions = $permissions;

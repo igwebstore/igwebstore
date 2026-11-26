@@ -22,7 +22,7 @@ if ($permissions>=128) {
   $evenS1Label = 'even';
   $exptDetailsQry = sprintf("SELECT * FROM igExperiments WHERE exptId='%s'", $exptId);
   $exptDetailsResult = $igrtSqli->query($exptDetailsQry);
-  if ($exptDetailsResult) {
+  if ($exptDetailsResult->num_rows>0) {
     $exptDetails = $exptDetailsResult->fetch_object();
     $oddS1Label = $exptDetails->oddS1Label;
     $evenS1Label = $exptDetails->evenS1Label;
@@ -31,7 +31,7 @@ if ($permissions>=128) {
   $qListQry = sprintf("SELECT * FROM wt_Step2BalancerInverted WHERE exptId='%s' AND jType='%s' ORDER BY actualJNo ASC", $exptId, $jType);
   $qResult = $igrtSqli->query($qListQry);
   $html = "no inverted Step2 respondents started";
-  if ($qResult) {
+  if ($qResult->num_rows>0) {
     $html = "<h2>step2-NP datasets $operationLabel</h2>";
     while ($qdsRow = $qResult->fetch_object()) {
       $html.= sprintf("<br/><div id=\"dsHeader_%s\">",$qdsRow->label);

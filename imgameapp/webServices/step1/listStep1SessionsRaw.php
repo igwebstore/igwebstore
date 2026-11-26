@@ -16,7 +16,7 @@ if ($permissions>=128) {
   $htmlBuilder = new htmlBuilder();
   $html .= "<div class=\"currentExperiments active\">";
   $html .= "<h2 class=\"closed\">Step1 sessions</h2><div>";
-  if ($completeResult) {
+  if ($completeResult->num_rows>0) {
     $html .= "<table><tr><th>title</th><th>day</th><th>session</th><th width='25%'>Odd judges</th><th width='25%'>Even judges</th></tr>";
     while ($row = $completeResult->fetch_object()) {
       $exptId = $row->exptId;
@@ -25,7 +25,7 @@ if ($permissions>=128) {
       // get expt title, and attach to day, session etc
       $titleSql = sprintf("SELECT * FROM igExperiments WHERE exptId='%s' AND inActive=0 AND injectedFlag=0", $exptId);
       $titleResult = $igrtSqli->query($titleSql);
-      if ($titleResult) {
+      if ($titleResult->num_rows>0) {
         $titleRow = $titleResult->fetch_object();
         $title = $titleRow->title;
         $oddS1Label = $titleRow->oddS1Label;

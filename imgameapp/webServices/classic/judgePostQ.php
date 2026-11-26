@@ -13,7 +13,7 @@ $iIntention = $igrtSqli->real_escape_string($_POST['intentionText']);
   // get day and session info from igActiveClassicUsers
   $sql=sprintf("SELECT * FROM igActiveClassicUsers WHERE uid='%s' AND exptId='%s'", $uid, $exptId);
   $result=$igrtSqli->query($sql);
-  if ($result) {
+  if ($result->num_rows>0) {
       $row = $result->fetch_object();
       $dayNo = $row->dayNo;
       $sessionNo=$row->sessionNo;      

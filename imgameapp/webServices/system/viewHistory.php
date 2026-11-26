@@ -13,7 +13,7 @@ $uid=$_GET['uid'];
 if ($permissions >= 128) {
 //  $sQry = "SELECT DISTINCT(exptId) AS exptId FROM dataSTEP2 ORDER BY exptId DESC";
 //  $sResult = $igrtSqli->query($sQry);
-//  if ($igrtSqli->affected_rows > 0) {
+//  if ($igrtSqli->num_rows > 0) {
 //    $html = "<table><tr><th>expt #</th><th>title</th><th width='33%'>Odd</th><th width='33%'>Even</th></tr>";   
 //    while ($sRow = $sResult->fetch_object()) {
 //      $exptId = $sRow->exptId;
@@ -31,13 +31,13 @@ if ($permissions >= 128) {
 //      $sessionStr = $sessionCnt > 1 ? "$sessionCnt sessions" : "$sessionCnt session";
 //      $oddExistsQry = sprintf("SELECT * FROM dataSTEP2 WHERE exptId='%s' AND jType=1", $exptId);
 //      $igrtSqli->query($oddExistsQry);
-//      $oddCnt= $igrtSqli->affected_rows;
+//      $oddCnt= $igrtSqli->num_rows;
 //      $oddButtonId = sprintf("arB_%s_1", $exptId);
 //      $oddBHtml = $oddCnt > 0 ? $htmlBuilder->makeButton($oddButtonId, "view audit data", "button") : "no Step2 respondents";
 //
 //      $evenExistsQry = sprintf("SELECT * FROM dataSTEP2 WHERE exptId='%s' AND jType=0", $exptId);
 //      $igrtSqli->query($evenExistsQry);
-//      $evenCnt = $igrtSqli->affected_rows;
+//      $evenCnt = $igrtSqli->num_rows;
 //      $evenButtonId = sprintf("arB_%s_0", $exptId);
 //      $evenBHtml = $oddCnt > 0 ? $htmlBuilder->makeButton($evenButtonId, "view audit data", "button") : "no Step2 respondents";
 //      

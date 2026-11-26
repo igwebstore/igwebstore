@@ -13,7 +13,7 @@ $days = [];
 $dsSql = "SELECT noDays,noSessions FROM edExptStatic_refactor WHERE exptId='$exptId'";
 $dsResult = $igrtSqli->query($dsSql);
 //echo $daySql.'<br/>';
-if ($dsResult) {
+if ($dsResult->num_rows>0) {
   $dsRow = $dsResult->fetch_object();
   $noDays = $dsRow->noDays;
   $noSessions = $dsRow->noSessions;
@@ -26,7 +26,7 @@ if ($dsResult) {
           $dayNo, $sessionNo);
         //echo $groupSql.'<br/>';
       $groupResult = $igrtSqli->query($groupSql);
-      if ($groupResult) {
+      if ($groupResult->num_rows>0) {
         while ($groupRow = $groupResult->fetch_object()) {
           $groupNo = $groupRow->groupNo;
           $turns = [];           
@@ -35,7 +35,7 @@ if ($dsResult) {
               $dayNo, $sessionNo, $groupNo);
             //echo $turnsSql.'<br/>';
           $turnResult = $igrtSqli->query($turnsSql);
-          if ($turnResult) {
+          if ($turnResult->num_rows>0) {
             $turnNo = 1;
             while ($turnRow = $turnResult->fetch_object()) {
               $owner = $turnRow->owner;

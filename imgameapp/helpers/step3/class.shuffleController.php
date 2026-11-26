@@ -141,7 +141,7 @@ class shuffleControllerClass {
           'dayNo'=>$dayNo, 
           'sessionNo'=>$sessionNo,
           'jNo'=> $jNo,
-          'activeS2Cnt'=>$this->igrtSqli->affected_rows,
+          'activeS2Cnt'=>$this->igrtSqli->num_rows,
           'chosenCombinations'=> []
         ]
       );
@@ -335,7 +335,7 @@ class shuffleControllerClass {
     $sql =sprintf("SELECT * FROM wt_Step3ShuffleJSON WHERE exptId='%s'", $this->exptId);
     
     $sr = $igrtSqli->query($sql);
-    if ($sr) {
+    if ($sr->num_rows>0) {
       $sql = sprintf("UPDATE wt_Step3ShuffleJSON SET json='%s' WHERE exptId='%s'", $igrtSqli->real_escape_string($json), $this->exptId);
     }
     else {
@@ -347,7 +347,7 @@ class shuffleControllerClass {
   function getSnowShuffleJSON() {
     $sql = sprintf("SELECT * FROM wt_Step3ShuffleJSON WHERE exptId='%s'", $this->exptId);
     $result = $this->igrtSqli->query($sql);
-    if ($this->igrtSqli->affected_rows > 0) {
+    if ($this->igrtSqli->num_rows > 0) {
       $row = $result->fetch_object();
       return $row->json;
     }
@@ -514,7 +514,7 @@ class shuffleControllerClass {
     global $igrtSqli;
     $sql =sprintf("SELECT * FROM wt_Step3LEShuffleJSON WHERE exptId='%s'", $this->exptId);    
     $sr = $igrtSqli->query($sql);
-    if ($sr) {
+    if ($sr->num_rows>0) {
       $sql = sprintf("UPDATE wt_Step3LEShuffleJSON SET json='%s' WHERE exptId='%s'", $igrtSqli->real_escape_string($json), $this->exptId);
     }
     else {
@@ -526,7 +526,7 @@ class shuffleControllerClass {
   function getLEShuffleJSON() {
     $sql = sprintf("SELECT * FROM wt_Step3LEShuffleJSON WHERE exptId='%s'", $this->exptId);
     $result = $this->igrtSqli->query($sql);
-    if ($this->igrtSqli->affected_rows > 0) {
+    if ($this->igrtSqli->num_rows > 0) {
       $row = $result->fetch_object();
       return $row->json;
     }
@@ -677,7 +677,7 @@ class shuffleControllerClass {
     global $igrtSqli;
     $sql =sprintf("SELECT * FROM wt_Step3TBTShuffleJSON WHERE exptId='%s'", $this->exptId);    
     $sr = $igrtSqli->query($sql);
-    if ($sr) {
+    if ($sr->num_rows>0) {
       $sql = sprintf("UPDATE wt_Step3TBTShuffleJSON SET json='%s' WHERE exptId='%s'", $igrtSqli->real_escape_string($json), $this->exptId);
     }
     else {
@@ -689,7 +689,7 @@ class shuffleControllerClass {
   function getTBTShuffleJSON() {
     $sql = sprintf("SELECT * FROM wt_Step3TBTShuffleJSON WHERE exptId='%s'", $this->exptId);
     $result = $this->igrtSqli->query($sql);
-    if ($this->igrtSqli->affected_rows > 0) {
+    if ($this->igrtSqli->num_rows > 0) {
       $row = $result->fetch_object();
       return $row->json;
     }
@@ -861,7 +861,7 @@ class shuffleControllerClass {
     $json.= "}";
     $sql =sprintf("SELECT * FROM wt_Step3ShuffleJSON WHERE exptId='%s'", $this->exptId);
     $sjr = $igrtSqli->query($sql);
-    if ($sjr) {
+    if ($sjr->num_rows>0) {
       $sql = sprintf("UPDATE wt_Step3ShuffleJSON SET json='%s' WHERE exptId='%s'", $igrtSqli->real_escape_string($json), $this->exptId);
     }
     else {
@@ -873,7 +873,7 @@ class shuffleControllerClass {
   function getShuffleJSON() {
     $sql = sprintf("SELECT * FROM wt_Step3ShuffleJSON WHERE exptId='%s'", $this->exptId);
     $result = $this->igrtSqli->query($sql);
-    if ($this->igrtSqli->affected_rows > 0) {
+    if ($this->igrtSqli->num_rows > 0) {
       $row = $result->fetch_object();
       return $row->json;
     }

@@ -71,7 +71,7 @@ $recruitmentCodeOptionLabel = $igrtSqli->real_escape_string($jSonArray['recruitm
 $nullRecruitmentCodeOptionLabel = $igrtSqli->real_escape_string($jSonArray['recruitmentCodeNoLabel']);
 
 //$eqOptions = $jSonArray['eqOptions'];
-$pages = $jSonArray['registrationViews'];
+$pages = $jSonArray['pages'];
 $currentFocusControlId = $jSonArray['currentFocusControlId'];
 
 $storeForm = true;
@@ -203,17 +203,17 @@ if ($storeForm) {
 // store the one filter question for this page
 //	  $makeFilterQuestion.= sprintf("('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')",
 //		  $exptId, $formType, $pageNo,
-//		  $registrationViews[$i]['filterQuestion']['fqType'],
-//		  $igrtSqli->real_escape_string($registrationViews[$i]['filterQuestion']['fqLabel']),
-//		  $registrationViews[$i]['filterQuestion']['fqAccordionClosed'],
-//		  $registrationViews[$i]['filterQuestion']['fqOptionsAccordionClosed'],
-//		  0 // $registrationViews[$i]['filterQuestion']['filterMapping'] - don't think filterMapping is used
+//		  $pages[$i]['filterQuestion']['fqType'],
+//		  $igrtSqli->real_escape_string($pages[$i]['filterQuestion']['fqLabel']),
+//		  $pages[$i]['filterQuestion']['fqAccordionClosed'],
+//		  $pages[$i]['filterQuestion']['fqOptionsAccordionClosed'],
+//		  0 // $pages[$i]['filterQuestion']['filterMapping'] - don't think filterMapping is used
 //	  );
 // store filter question options
-//	  for ($k=0; $k<count($registrationViews[$i]['filterQuestion']['fqOptions']); $k++) {
+//	  for ($k=0; $k<count($pages[$i]['filterQuestion']['fqOptions']); $k++) {
 //		  if (($i>0) || ($k>0)) { $makeFilterOption.= ','; }
 //		  $makeFilterOption.= sprintf("('%s', '%s', '%s', '%s', '%s')", $exptId, $formType, $pageNo,
-//			  $igrtSqli->real_escape_string($registrationViews[$i]['filterQuestion']['fqOptions'][$k]['fqoLabel']),
-//			  $registrationViews[$i]['filterQuestion']['fqOptions'][$k]['responseMapping']);
+//			  $igrtSqli->real_escape_string($pages[$i]['filterQuestion']['fqOptions'][$k]['fqoLabel']),
+//			  $pages[$i]['filterQuestion']['fqOptions'][$k]['responseMapping']);
 //	  }
 // store questions per page

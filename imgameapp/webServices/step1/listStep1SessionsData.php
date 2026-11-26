@@ -14,9 +14,9 @@ if ($permissions>=128) {
   $sqlGetComplete="SELECT * FROM edSessions WHERE step1Complete='1' ORDER by exptId DESC, dayNo ASC, sessionNo ASC";    
   $completeResult=$igrtSqli->query($sqlGetComplete);
   $htmlBuilder = new htmlBuilder();
-  $html .= "<div class=\"currentExperiments active\">";
+  $html = "<div class=\"currentExperiments active\">";
   $html .= "<h2 class=\"closed\">completed Step1 sessions</h2><div>";
-  if ($completeResult) {
+  if ($completeResult->num_rows>0) {
     $html .= "<table><tr><th>title</th><th>day</th><th>session</th><th width='25%'>Odd players</th><th width='25%'>Even players</th></tr>";
     while ($row = $completeResult->fetch_object()) {
       $exptId = $row->exptId;
@@ -25,7 +25,7 @@ if ($permissions>=128) {
       // get expt title, and attach to day, session etc
       $titleSql = sprintf("SELECT * FROM igExperiments WHERE exptId='%s' AND injectedFlag=0 AND inActive=0", $exptId);
       $titleResult = $igrtSqli->query($titleSql);
-      if ($titleResult) {
+      if ($titleResult->num_rows>0) {
         $titleRow = $titleResult->fetch_object();
         $title = $titleRow->title;
         $oddS1Label = $titleRow->oddS1Label;
@@ -75,7 +75,7 @@ if ($permissions>=128) {
   $sql = "SELECT * FROM edSessions WHERE step1Complete='0' ORDER BY exptId DESC, dayNo ASC, sessionNo ASC";
   $exptIdList = $igrtSqli->query($sql);  
   $html .= "<h2 class=\"closed\">partial Step1 sessions</h2><div>";
-  if ($exptIdList) {
+  if ($exptIdList->num_rows>0) {
     $html .= "<table><tr><th>title</th><th>day</th><th>session</th><th width='25%'>Odd players</th><th width='25%'>Even players</th></tr>";
     while ($row = $exptIdList->fetch_object()) {
       $exptId = $row->exptId;
@@ -83,11 +83,11 @@ if ($permissions>=128) {
       $sessionNo = $row->sessionNo;
       $dataExists = sprintf("SELECT * FROM dataSTEP1 WHERE exptId='%s' AND dayNo='%s' and sessionNo='%s'", $exptId, $dayNo, $sessionNo);
       $der = $igrtSqli->query($dataExists);
-      if ($der) {
+      if ($der->num_rows>0) {
           // get expt title, and attach to day, session etc
           $titleSql = sprintf("SELECT * FROM igExperiments WHERE exptId='%s' AND injectedFlag=0 AND inActive=0", $exptId);
           $titleResult = $igrtSqli->query($titleSql);
-          if ($titleResult) {
+          if ($titleResult->num_rows>0) {
             $titleRow = $titleResult->fetch_object();
             $title = $titleRow->title;
             $oddS1Label = $titleRow->oddS1Label;

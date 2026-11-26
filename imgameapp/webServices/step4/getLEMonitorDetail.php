@@ -27,7 +27,7 @@ if ($permissions>=128) {
     $s4jNo = $s4jRow->s4jNo;
     $dsQry = sprintf("SELECT * FROM wt_LinkedStep4datasets WHERE s4jNo='%s' ORDER BY rated DESC, exptId ASC, jNo ASC", $s4jNo);
     $dsResult = $igrtSqli->query($dsQry);
-    $transcriptCount = $dsREsult ? $dsResult->num_rows : 0;
+    $transcriptCount = $dsResult ? $dsResult->num_rows : 0;
     $ratedCount = 0;
     $s4jdatasets = array();
     while ($dsRow = $dsResult->fetch_object()) {
@@ -45,7 +45,7 @@ if ($permissions>=128) {
             $exptId, $s4jNo, $jNo);
         //echo $getRatingQry.'<br />';
         $ratingResult = $igrtSqli->query($getRatingQry);
-        if ($ratingResult) {
+        if ($ratingResult->num_rows>0) {
           $ratingRow = $ratingResult->fetch_object();
           $correct = $ratingRow->correct;
           $confidence = $ratingRow->confidence;

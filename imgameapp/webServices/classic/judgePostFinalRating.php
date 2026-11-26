@@ -15,7 +15,7 @@ if (!isset($root_path)) { $root_path = $_SERVER['DOCUMENT_ROOT']; }
   // get day and session info from igActiveClassicUsers
   $sqlDS=sprintf("SELECT * FROM igActiveClassicUsers WHERE uid='%s' AND exptId='%s'", $uid, $exptId);
   $DSresult=$igrtSqli->query($sqlDS);
-  if ($DSresult) {
+  if ($DSresult->num_rows>0) {
     $rowDS=$DSresult->fetch_object();
     $dayNo=$rowDS->dayNo;
     $sessionNo=$rowDS->sessionNo;

@@ -1,5 +1,5 @@
 <?php
-  include_once('/var/www/config/connectionStrings.php');
+  include_once('/var/www/secureconfig/connectionStrings.php');
   global $username;
   global $password;
   // create a mysql object for use in classes and web-services

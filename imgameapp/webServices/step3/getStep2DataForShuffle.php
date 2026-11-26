@@ -20,7 +20,7 @@ if ($permissions>=128) {
   $html = "<p>No marked/reviewed Step2 sessions exist.</p>";
   $uniqueIdQry = "SELECT DISTINCT(exptId) AS exptId FROM wt_Step2pptReviews";
   $uidResult = $igrtSqli->query($uniqueIdQry);
-  if ($uidResult) {
+  if ($uidResult->num_rows>0) {
     $html = "<table><tr><th>expt #</th><th>title</th><th>even S4 judges</th><th>Even</th><th>odd S4 judges</th><th>Odd</th></tr>";   
     while ($eidRow = $uidResult->fetch_object()) {
       $exptId = $eidRow->exptId;
@@ -28,7 +28,7 @@ if ($permissions>=128) {
       $qry ="CALL getExperimentDetails($exptId,@title)";
       $igrtSqli->query($qry);
       $sr2 = $igrtSqli->query("SELECT @title as exptTitle");
-      if ($sr2) {
+      if ($sr2->num_rows>0) {
         $row = $sr2->fetch_object();
         $exptTitle = $row->exptTitle;    
       }
@@ -37,7 +37,7 @@ if ($permissions>=128) {
       // get counts of odd and even s4 judges (if previously shuffled)
       $s4jQry = sprintf("SELECT * FROM wt_Step4JudgeCounts WHERE exptId='%s'", $exptId);
       $s4jResult = $igrtSqli->query($s4jQry);
-      if ($s4jResult) {
+      if ($s4jResult->num_rows>0) {
         $s4jRow = $s4jResult->fetch_object();
         $evenS4jc = $s4jRow->evenS4JudgeCount;
         $oddS4jc = $s4jRow->oddS4JudgeCount;

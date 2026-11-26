@@ -19,7 +19,7 @@ if (!isset($root_path)) { $root_path = $_SERVER['DOCUMENT_ROOT']; }
   // get day and session info from igActiveClassicUsers
   $sqlDS=sprintf("SELECT * FROM igActiveClassicUsers WHERE uid='%s' AND exptId='%s'",$uid,$exptId);
   $DSresult=$igrtSqli->query($sqlDS);
-  if ($DSresult) {
+  if ($DSresult->num_rows>0) {
     $rowDS=$DSresult->fetch_object();
     $dayNo=$rowDS->dayNo;
     $sessionNo=$rowDS->sessionNo;
@@ -56,7 +56,7 @@ if (!isset($root_path)) { $root_path = $_SERVER['DOCUMENT_ROOT']; }
       . "ORDER BY insertDT DESC",
       $exptId, $dayNo, $sessionNo, $groupNo);
   $dataResult=$igrtSqli->query($sqlData);
-  if ($dataResult) {
+  if ($dataResult->num_rows>0) {
     $dataRow=$dataResult->fetch_object();
     $recentQ=$dataRow->jQ;
     if ($role=="NP") {
@@ -69,7 +69,7 @@ if (!isset($root_path)) { $root_path = $_SERVER['DOCUMENT_ROOT']; }
     // 07/11 - change check for both to look at status of both respondents (should both be 2)
 //        $sqlBothCheck=sprintf("SELECT * FROM igActiveClassicUsers WHERE exptId='%s' AND day='%s' AND session='%s' AND respState='2'",$exptId,$day,$session);
 //        $bcResult=$igrtSqli->query($sqlBothCheck);
-    //if ($igrtSqli->affected_rows == 2) {
+    //if ($igrtSqli->num_rows == 2) {
     if (($dataRow->npA>'') && ($dataRow->pA>'')) {
       $sqlBoth=sprintf("UPDATE igActiveClassicUsers SET jState='2' WHERE "
           . "exptId='%s' AND dayNo='%s' AND sessionNo='%s' ANG groupNo='%s' AND role='J'",
@@ -84,7 +84,7 @@ if (!isset($root_path)) { $root_path = $_SERVER['DOCUMENT_ROOT']; }
   // get exptId, day & session
   $sqlHistory=sprintf("SELECT * FROM dataClassic WHERE exptId='%s' AND dayNo='%s' AND sessionNo='%s' ORDER BY insertDT DESC",$exptId,$dayNo,$sessionNo);
   $historyResult=$igrtSqli->query($sqlHistory);
-  if ($historyResult) {
+  if ($historyResult->num_rows>0) {
     while ($row=$historyResult->fetch_object()) {
       if ($role=="NP") {
         $det=array('resp'=>$row->npA,'jQ'=>$row->jQ);                    

@@ -32,10 +32,6 @@ class PostChap {
       curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
     }
     
-    if ($domain == "ig2.com") {
-      $resolve = array(sprintf("%s:%d:%s", $url, 80, "192.168.1.143")); //
-      curl_setopt($ch, CURLOPT_RESOLVE, $resolve);
-    }
     //execute post
     $result = curl_exec($ch);
     $error = curl_error($ch);
@@ -58,10 +54,6 @@ class PostChap {
     curl_setopt($ch, CURLOPT_URL, $url.'/index.php'); //"150.214.29.10/index.php"
     curl_setopt($ch, CURLOPT_POST, 1);  // 1 == POST
     curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata);
-	  if ($url == "ig2.com") {
-		  $resolve = array(sprintf("%s:%d:%s", $url, 80, "192.168.1.143")); //
-		  curl_setopt($ch, CURLOPT_RESOLVE, $resolve);
-	  }
 	  //execute post
     $result = curl_exec($ch);
     if (!$result) {

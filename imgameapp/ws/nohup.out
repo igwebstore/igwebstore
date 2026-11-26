@@ -18651,3 +18651,67 @@ disconnection128.14.134.134 (22)
 disconnection192.35.168.245 (22)
 disconnection185.198.0.176 (23)
 disconnection83.97.20.29 (22)
+Running through imitationgame.co.uk and logging to timestamped filestarting server: next check at 1793787916connection145.40.158.130 (1) has connected.\nconnection145.40.158.130 (2) has connected.\nconnection145.40.158.130 (3) has connected.\ndisconnection145.40.158.130 (1)
+PHP Deprecated:  Creation of dynamic property Step1Controller::$clientId is deprecated in /var/www/html/imitationgame.co.uk/ws/servermulti.php on line 174
+
+Deprecated: Creation of dynamic property Step1Controller::$clientId is deprecated in /var/www/html/imitationgame.co.uk/ws/servermulti.php on line 174
+connection145.40.158.130 (1) has connected.\ndisconnection145.40.158.130 (1)
+Running through imitationgame.co.uk and logging to timestamped filestarting server: next check at 1793788058connection145.40.158.130 (1) has connected.\nRunning through imitationgame.co.uk and logging to timestamped filestarting server: next check at 1793788107connection145.40.158.130 (1) has connected.\ndisconnection145.40.158.130 (1)
+PHP Deprecated:  Creation of dynamic property Step1Controller::$clientId is deprecated in /var/www/html/imitationgame.co.uk/ws/servermulti.php on line 174
+
+Deprecated: Creation of dynamic property Step1Controller::$clientId is deprecated in /var/www/html/imitationgame.co.uk/ws/servermulti.php on line 174
+Running through imitationgame.co.uk and logging to timestamped filestarting server: next check at 1793788200connection145.40.158.130 (1) has connected.\nconnection145.40.158.130 (2) has connected.\nconnection145.40.158.130 (3) has connected.\nconnection145.40.158.130 (4) has connected.\nconnection145.40.158.130 (5) has connected.\nconnection145.40.158.130 (6) has connected.\nconnection145.40.158.130 (7) has connected.\nconnection145.40.158.130 (9) has connected.\nconnection145.40.158.130 (10) has connected.\ndisconnection145.40.158.130 (1)
+PHP Deprecated:  Creation of dynamic property Step1Controller::$clientId is deprecated in /var/www/html/imitationgame.co.uk/ws/servermulti.php on line 174
+
+Deprecated: Creation of dynamic property Step1Controller::$clientId is deprecated in /var/www/html/imitationgame.co.uk/ws/servermulti.php on line 174
+disconnection145.40.158.130 (2)
+disconnection145.40.158.130 (10)
+disconnection145.40.158.130 (4)
+disconnection145.40.158.130 (5)
+disconnection145.40.158.130 (3)
+disconnection145.40.158.130 (9)
+disconnection145.40.158.130 (6)
+disconnection145.40.158.130 (7)
+Could not open input file: servertmulti.php
+Running through imitationgame.co.uk and logging to timestamped filestarting server: next check at 1794218870connection145.40.158.130 (1) has connected.\nconnection145.40.158.130 (2) has connected.\nconnection145.40.158.130 (3) has connected.\nconnection145.40.158.130 (4) has connected.\nconnection145.40.158.130 (5) has connected.\nconnection131.211.34.249 (6) has connected.\nconnection131.211.34.249 (7) has connected.\nconnection131.211.34.249 (8) has connected.\nconnection131.211.34.249 (9) has connected.\ndisconnection69.5.169.180 (12)
+disconnection69.5.169.225 (12)
+disconnection69.5.169.248 (12)
+disconnection185.226.93.242 (12)
+disconnection131.211.34.249 (6)
+disconnection131.211.34.249 (9)
+disconnection131.211.34.249 (7)
+disconnection131.211.34.249 (8)
+disconnection195.178.110.78 (6)
+disconnection195.178.110.78 (16)
+disconnection195.178.110.78 (6)
+disconnection195.178.110.78 (23)
+disconnection195.178.110.78 (9)
+disconnection195.178.110.78 (24)
+disconnection195.178.110.78 (22)
+disconnection195.178.110.78 (13)
+disconnection195.178.110.78 (15)
+disconnection195.178.110.78 (18)
+disconnection195.178.110.78 (7)
+disconnection195.178.110.78 (12)
+disconnection195.178.110.78 (14)
+disconnection195.178.110.78 (8)
+disconnection195.178.110.78 (17)
+disconnection195.178.110.78 (19)
+disconnection195.178.110.78 (20)
+disconnection145.40.158.130 (1)
+PHP Deprecated:  Creation of dynamic property Step1Controller::$clientId is deprecated in /var/www/html/imitationgame.co.uk/ws/servermulti.php on line 174
+
+Deprecated: Creation of dynamic property Step1Controller::$clientId is deprecated in /var/www/html/imitationgame.co.uk/ws/servermulti.php on line 174
+disconnection145.40.158.130 (2)
+disconnection145.40.158.130 (5)
+disconnection145.40.158.130 (3)
+disconnection145.40.158.130 (4)
+disconnection195.178.110.78 (21)
+disconnection71.6.155.70 (10)
+disconnection45.135.193.101 (1)
+disconnection45.198.224.125 (1)
+disconnection172.234.217.192 (1)
+disconnection172.234.217.192 (1)
+PHP Warning:  socket_select(): Unable to select [4]: Interrupted system call in /var/www/html/imitationgame.co.uk/ws/class.PHPWebSocket.php on line 215
+
+Warning: socket_select(): Unable to select [4]: Interrupted system call in /var/www/html/imitationgame.co.uk/ws/class.PHPWebSocket.php on line 215

@@ -22,7 +22,7 @@ $alignmentChoice2 = $_POST['alignmentChoice2'];
   // get day and session info from igActiveClassicUsers
   $sqlDS=sprintf("SELECT * FROM igActiveClassicUsers WHERE uid='%s' AND exptId='%s'",$uid,$exptId);
   $DSresult=$igrtSqli->query($sqlDS);
-  if ($DSresult) {
+  if ($DSresult->num_rows>0) {
     $rowDS=$DSresult->fetch_object();
     $dayNo=$rowDS->dayNo;
     $sessionNo=$rowDS->sessionNo;
@@ -53,7 +53,7 @@ $alignmentChoice2 = $_POST['alignmentChoice2'];
   $sql=sprintf("SELECT * FROM dataClassic WHERE owner='%s' ORDER BY insertDT DESC", $uid);
   //echo $sql;
   $result=$igrtSqli->query($sql);
-  if ($result) {
+  if ($result->num_rows>0) {
     while ($row=$result->fetch_object()) {
       $det=array(
         'jQuestion'=>$row->jQ,

@@ -22,7 +22,7 @@ if ($permissions>=128) {
   $qsList = array();
   $qsQry = sprintf("SELECT * FROM wt_Step2BalancerInverted WHERE exptId='%s' AND jType='%s' ORDER BY actualJNo ASC", $exptId, $jType);
   $qsResult = $igrtSqli->query($qsQry);
-  if ($qsResult) {
+  if ($qsResult->num_rows>0) {
     while ($qsRow = $qsResult->fetch_object()) {
       $actualJNo = $qsRow->actualJNo;
       $dayNo = $qsRow->dayNo;
@@ -39,7 +39,7 @@ if ($permissions>=128) {
           . "sessionNo='%s' AND jNo='%s' AND canUse=1 ORDER BY qNo ASC", 
           $exptId, $jType, $dayNo, $sessionNo, $jNo);
       $iQuestionResult = $igrtSqli->query($iQuestionQry);
-      if ($iQuestionResult) {
+      if ($iQuestionResult->num_rows>0) {
         while ($iQuestionRow = $iQuestionResult->fetch_object()) {
           $iQuestion = array(
             'q'=> $iQuestionRow->q,
@@ -51,7 +51,7 @@ if ($permissions>=128) {
             $exptId, $jType, $dayNo, $sessionNo, $jNo, $iQuestionRow->qNo);
           //echo $s2Qry;
           $s2Result = $igrtSqli->query($s2Qry);
-          if ($s2Result) {
+          if ($s2Result->num_rows>0) {
             while ($s2Row = $s2Result->fetch_object()) {
               $s2 = array(
                 'pptNo'=> $s2Row->pptNo,

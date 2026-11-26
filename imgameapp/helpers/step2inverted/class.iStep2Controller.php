@@ -93,7 +93,7 @@ class iStep2Controller {
     global $igrtSqli;
     $getSQL = "SELECT * FROM edExptStatic_refactor WHERE exptId=$exptId";
     $getResult = $igrtSqli->query($getSQL);
-    if ($getResult) {
+    if ($getResult->num_rows>0) {
       $row = $getResult->fetch_object();
       return $row->step2Sequential;
     }
@@ -110,17 +110,17 @@ class iStep2Controller {
     $dayQry = "SELECT DISTINCT(dayNo) AS dayNo FROM md_dataStep1reviewed WHERE exptId=$exptId AND jType=$jType ORDER BY dayNo ASC";
     //$retDebug = $dayQry; 
     $dayResult = $igrtSqli->query($dayQry);
-    if ($dayResult) {
+    if ($dayResult->num_rows>0) {
       while ($dayRow = $dayResult->fetch_object()) {
         $sessQry = "SELECT DISTINCT(sessionNo) as sessionNo FROM md_dataStep1reviewed WHERE exptId=$exptId AND jType=$jType AND dayNo=$dayRow->dayNo ORDER BY sessionNo ASC ";
         //$retDebug .= ' : '.$sessQry;
         $sessResult = $igrtSqli->query($sessQry);
-        if ($sessResult) {
+        if ($sessResult->num_rows>0) {
           while ($sessRow = $sessResult->fetch_object()) {
             $xQry = "SELECT DISTINCT(jNo) AS jNo FROM md_dataStep1reviewed WHERE exptId=$exptId AND jType=$jType AND reviewed=1 AND canUse=1 AND sessionNo=$sessRow->sessionNo AND dayNo=$dayRow->dayNo ORDER BY jNo ASC";
             //$retDebug .= ' : '.$xQry;
             $xResult = $igrtSqli->query($xQry);
-            if ($xResult) {
+            if ($xResult->num_rows>0) {
               $Discards = $this->getDiscards($exptId, $dayRow->dayNo, $sessRow->sessionNo, $jType);
               while ($jNoRow = $xResult->fetch_object()) {
                 $jNo = $jNoRow->jNo;
@@ -132,7 +132,7 @@ class iStep2Controller {
                   $qQry = "SELECT * FROM md_dataStep1reviewed WHERE exptId=$exptId AND jType=$jType AND reviewed=1 AND canUse=1 AND jNo=$jNo AND sessionNo=$sessRow->sessionNo AND dayNo=$dayRow->dayNo ORDER BY qNO ASC";
                   //$retDebug .= ' : '.$qQry;
                   $qResult = $igrtSqli->query($qQry);
-                  if ($qResult) {
+                  if ($qResult->num_rows>0) {
                     // questions array to attach to judge
                     $qArray = array();
                     while ($qRow = $qResult->fetch_object()) {
@@ -219,7 +219,7 @@ class iStep2Controller {
     $retValue = 0;
     $getSummary = sprintf("SELECT * FROM wt_Step1Discards WHERE exptId='%s' AND dayNo='%s' AND sessionNo='%s'", $exptId, $dayNo, $sessionNo);
     $summaryResults = $igrtSqli->query($getSummary);
-    if ($summaryResults) {
+    if ($summaryResults->num_rows>0) {
       $summaryRow = $summaryResults->fetch_object();
       $retValue = ($jType == 1) ? $summaryRow->evenDiscards : $summaryRow->oddDiscards;
     }
@@ -271,7 +271,7 @@ class iStep2Controller {
     $qResult = $igrtSqli->query($qQry);
 		$qList = [];
 		$qPtr = 1;
-    if ($qResult) {
+    if ($qResult->num_rows>0) {
 			while ($qRow = $qResult->fetch_object()) {
 				$qDef = [
 					'jQ' => $qRow->q,
@@ -312,7 +312,7 @@ class iStep2Controller {
 //    $igrtSqli->query($incSql);
     $maxSql = sprintf("SELECT MAX(respNo) AS pptPtr FROM wt_Step2pptStatusInverted WHERE exptId='%s' AND jType='%s' AND actualJNo='%s'", $exptId, $jType, $igrChosen);
     $maxResult = $igrtSqli->query($maxSql);
-    if ($maxResult) {
+    if ($maxResult->num_rows>0) {
       $maxRow = $maxResult->fetch_object();
       $pptNo = $maxRow->pptPtr;
       ++$pptNo;

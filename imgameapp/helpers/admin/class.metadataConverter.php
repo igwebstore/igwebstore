@@ -1,6 +1,6 @@
 <?php
 /**
- * de-reference experiment metadata in admin registrationViews and other
+ * de-reference experiment metadata in admin pages and other
  * 
  * @author MartinHall
  */
@@ -14,6 +14,8 @@ class metadataConverter {
   private $countries = array();
   private $locations = array();
   private $languages = array();
+  
+  private $igrtSqli;
   
   // <editor-fold defaultstate="collapsed" desc=" public interface"
   
@@ -139,10 +141,9 @@ class metadataConverter {
   }
 
   private function getSelectItems($tblName, $orderBy) {
-    global $igrtSqli;
     $items = [];
     $qry = sprintf("SELECT * FROM %s ORDER BY %s ASC", $tblName, $orderBy);
-    $qResult = $igrtSqli->query($qry);
+    $qResult = $this->igrtSqli->query($qry);
 		while ($qRow = $qResult->fetch_object()) {
 			array_push($items, array('id'=>$qRow->id, 'label'=>$qRow->label));
 		}
@@ -165,7 +166,6 @@ class metadataConverter {
   
   private function getSelectLists() {
    // get all control values 
-    global $igrtSqli;
     $this->subjects = $this->getSelectItems("igTopics", "label");
     $this->countries = $this->getSelectItems("igCountries", "label");
     $this->languages = $this->getSelectItems("igLanguages", "label");
@@ -177,6 +177,8 @@ class metadataConverter {
   // <editor-fold defaultstate="collapsed" desc=" constructor">
 
   function __construct() {
+    global $igrtSqli;
+    $this->igrtSqli = $igrtSqli;
     $this->getSelectLists();
   }
   

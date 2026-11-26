@@ -27,7 +27,7 @@
   ];
   $sqlQry_Login=sprintf("SELECT * FROM igUsers WHERE email='%s' AND password='%s'",$email,$hash_str);
   $loginResult=$igrtSqli->query($sqlQry_Login);
-  if ($loginResult) {
+  if ($loginResult->num_rows>0) {
     $row=$loginResult->fetch_object();
     $userDef['uid']=$row->id;
     $userDef['permissions'] = $row->permissions;
@@ -53,7 +53,7 @@
 				$turnFinished = true;
 				$groupQry = sprintf("SELECT * FROM igActiveClassicUsers WHERE groupNo='%s' AND dayNo='%s' AND sessionNo='%s'",$userDef['groupNo'],$userDef['dayNo'],$userDef['sessionNo'] );
 				$groupResult=$igrtSqli->query($groupQry);
-				if ($groupResult) {
+				if ($groupResult->num_rows>0) {
 					while ($groupRow = $activeResult->fetch_object()) {
 						if ($groupRow->qNo != $userDef['qNo']) { $turnFinished = false; }
 					}

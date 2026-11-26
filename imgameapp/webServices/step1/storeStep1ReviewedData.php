@@ -97,7 +97,7 @@ if (!isset($root_path)) { $root_path = $_SERVER['DOCUMENT_ROOT']; }
   // once all judges processed, do discards
   $discardExistsQry = sprintf("SELECT * FROM wt_Step1Discards WHERE exptId='%s'", $exptId);
   $discardExistResult = $igrtSqli->query($discardExistsQry);
-  if ($discardExistResult) {
+  if ($discardExistResult->num_rows>0) {
     // update
   // insert updated discard info
     $storeCmd = sprintf("UPDATE wt_Step1Discards SET evenDiscards = '%s', oddDiscards='%s' "

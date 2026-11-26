@@ -62,7 +62,7 @@ if ($permissions>=128) {
             $exptId, $jType, $s4jNo, $actualJNo);
         //echo $getRatingQry.'<br />';
         $ratingResult = $igrtSqli->query($getRatingQry);
-        if ($ratingResult) {
+        if ($ratingResult->num_rows>0) {
           $ratingRow = $ratingResult->fetch_object();
           $correct = $ratingRow->correct;
           $confidence = $ratingRow->confidence;
@@ -85,7 +85,7 @@ if ($permissions>=128) {
             . "AND actualJNo='%s' AND respNo='%s' AND canUse=1 AND qNo='%s'", 
             $exptId, $jType, $actualJNo, $respNo2, $qNo);
         $turnsR2Result = $igrtSqli->query($getR2TurnsQry);
-        if ($turnsR2Result) {
+        if ($turnsR2Result->num_rows>0) {
           $turnR2Row = $turnsR2Result->fetch_object();         
           $turnDef = array(
             'q' => $q,

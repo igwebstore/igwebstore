@@ -8,6 +8,10 @@ include_once $root_path.'/helpers/admin/class.metadataConverter.php';
 include_once $root_path.'/helpers/models/class.experimentModel.php';
 include_once $root_path.'/helpers/step3/class.shuffleController.php';
 
+
+global $igrtSqli;
+
+//xdebug_break();
 // <editor-fold defaultstate="collapsed" desc=" functions">
 
   function updateTable($exptId, $tblName, $tblFieldName, $value) {
@@ -117,7 +121,7 @@ include_once $root_path.'/helpers/step3/class.shuffleController.php';
     $igrtSqli->query($delS1Users);
     $suNoQry = "SELECT * FROM wt_Step1UsersID";
     $suNoResult = $igrtSqli->query($suNoQry);
-    if ($suNoResult) {
+    if ($suNoResult->num_rows>0) {
       $suNoRow = $suNoResult->fetch_object();
       $oldsuNoPtr = $suNoRow->prevValue;
     }
@@ -271,7 +275,7 @@ include_once $root_path.'/helpers/step3/class.shuffleController.php';
       for ($sessionNo = 1; $sessionNo <= $eModel->noSessions; $sessionNo++) {
         $hasDataSql = sprintf("SELECT * FROM md_dataStep1reviewed WHERE exptId='%s' AND dayNo='%s' AND sessionNo='%s' AND jType='%s'", $exptId, $dayNo, $sessionNo, $jType);
         $hdr = $igrtSqli->query($hasDataSql);
-        if ($hdr) {
+        if ($hdr->num_rows > 0) {
           $maxSql = sprintf("SELECT MAX(jNo) as maxjNo FROM md_dataStep1reviewed WHERE exptId='%s' AND dayNo='%s' AND sessionNo='%s' AND jType='%s'", $exptId, $dayNo, $sessionNo, $jType);
           $meResult = $igrtSqli->query($maxSql);
           $meRow = $meResult->fetch_object();
@@ -280,7 +284,7 @@ include_once $root_path.'/helpers/step3/class.shuffleController.php';
           $jDiscard = 0;
           $discardSql = sprintf("SELECT * FROM wt_Step1Discards WHERE exptId='%s' AND dayNo='%s' AND sessionNo='%s'", $exptId, $dayNo, $sessionNo);
           $discardResult = $igrtSqli->query($discardSql);
-          if ($discardResult) {
+          if ($discardResult->num_rows>0) {
             $discardRow = $discardResult->fetch_object();
             if ($jType == 0) {
               $jDiscard = $discardRow->evenDiscards;         
@@ -321,7 +325,7 @@ include_once $root_path.'/helpers/step3/class.shuffleController.php';
       for ($sessionNo = 1; $sessionNo <= $eModel->noSessions; $sessionNo++) {
         $hasDataSql = sprintf("SELECT * FROM md_dataStep1reviewed WHERE exptId='%s' AND dayNo='%s' AND sessionNo='%s' AND jType='%s'", $exptId, $dayNo, $sessionNo, $jType);
         $hdr = $igrtSqli->query($hasDataSql);
-        if ($hdr) {
+        if ($hdr->num_rows>0) {
           $maxSql = sprintf("SELECT MAX(jNo) as maxjNo FROM md_dataStep1reviewed WHERE exptId='%s' AND dayNo='%s' AND sessionNo='%s' AND jType='%s'", $exptId, $dayNo, $sessionNo, $jType);
           $meResult = $igrtSqli->query($maxSql);
           $meRow = $meResult->fetch_object();
@@ -330,7 +334,7 @@ include_once $root_path.'/helpers/step3/class.shuffleController.php';
           $jDiscard = 0;
           $discardSql = sprintf("SELECT * FROM wt_Step1Discards WHERE exptId='%s' AND dayNo='%s' AND sessionNo='%s'", $exptId, $dayNo, $sessionNo);
           $discardResult = $igrtSqli->query($discardSql);
-          if ($discardResult) {
+          if ($discardResult->num_rows>0) {
             $discardRow = $discardResult->fetch_object();
             if ($jType == 0) {
               $jDiscard = $discardRow->evenDiscards;         
@@ -361,7 +365,7 @@ include_once $root_path.'/helpers/step3/class.shuffleController.php';
   
   function processBalancerValues($exptId, $step, $oddRespMax, $evenRespMax) {
     global $igrtSqli;
-    // just in case normal updateTable didn't work as rrow does not yet exist
+    // just in case normal updateTable didn't work as row does not yet exist
     $existsSql = sprintf("SELECT * FROM wt_Step2BalancerRespMax WHERE exptId='%s'", $exptId);
     $existsResult = $igrtSqli->query($existsSql);
     if ($existsResult->num_rows == 0) {
@@ -505,7 +509,7 @@ foreach ($formFields as $ff) {
 // NOTE - get eModel AFTER any changes above IF it's required
 
 // for most sections above is standard, but any dynamic sections (e.g. days & sessions)
-// or registrationViews that have an operation (balancer, shuffle) etc
+// or pages that have an operation (balancer, shuffle) etc
 // need to have values written back first, with any structural changes then imposed over
 switch ($sectionName) {
   case "s1sessionsusers" : {

@@ -14,19 +14,19 @@ class step2Controller {
   private $tabIndex = 1;
   private $focusId;
   public $logger;
+  private $igrtSqli;
   
   
   function chooseIGR($jType, $restartUID, $userCode) {
-    global $igrtSqli;
     $jChosen = -1;
     $targetSql = sprintf("SELECT MIN(respCount) AS respCount FROM wt_Step2Balancer WHERE exptId='%s' AND jType='%s' AND closed=0", $this->exptId, $jType);
-    $targetResult = $igrtSqli->query($targetSql);
-    if ($targetResult) {
+    $targetResult = $this->igrtSqli->query($targetSql);
+    if ($targetResult->num_rows>0) {
       $targetRow = $targetResult->fetch_object(); // get first of all possible ones
       $targetRespCount = $targetRow->respCount;
       $getTargetSql = sprintf("SELECT * FROM wt_Step2Balancer WHERE exptId='%s' AND jType='%s' AND closed=0 AND respCount='%s'",
         $this->exptId, $jType, $targetRespCount);
-      $getTargetResult = $igrtSqli->query($getTargetSql);
+      $getTargetResult = $this->igrtSqli->query($getTargetSql);
       $getTargetRow = $getTargetResult->fetch_object();
       $targetId = $getTargetRow->id;
       $jChosen = $getTargetRow->actualJNo;
@@ -36,10 +36,10 @@ class step2Controller {
       $closedStatus = ($currentRespCount == $currentRespMax) ? 1 : 0;
       $upDateQry = sprintf("UPDATE wt_Step2Balancer SET respCount='%s', closed='%s' WHERE id='%s'",
         $currentRespCount, $closedStatus, $targetId);
-      $igrtSqli->query($upDateQry);
+      $this->igrtSqli->query($upDateQry);
       if ($restartUID > -1) {
-        $attachQry = sprintf("UPDATE wt_Step2FormUIDs SET recruitmentCode='%s' WHERE id='%s'", $igrtSqli->real_escape_string($userCode), $restartUID);
-        $igrtSqli->query($attachQry);
+        $attachQry = sprintf("UPDATE wt_Step2FormUIDs SET recruitmentCode='%s' WHERE id='%s'", $this->igrtSqli->real_escape_string($userCode), $restartUID);
+        $this->igrtSqli->query($attachQry);
       }
       return $jChosen;
     }
@@ -50,15 +50,13 @@ class step2Controller {
   }
   
   function attachLabeltoRespondent($newRespId, $finishLabel) {
-    global $igrtSqli;
     $sql = sprintf("UPDATE wt_Step2pptStatusInverted SET userCode='%s' WHERE id='%s'", $finishLabel, $newRespId);
-    $igrtSqli->query($sql);
+    $this->igrtSqli->query($sql);
   }
   
   function setPptFinished($respId) {
-    global $igrtSqli;
     $sql = sprintf("UPDATE wt_Step2pptStatusInverted SET finished='1' WHERE id='%s'", $respId);
-    $igrtSqli->query($sql);    
+    $this->igrtSqli->query($sql);
   }
   
     
@@ -78,10 +76,9 @@ class step2Controller {
   } 
   
   function getStep2PresentType($exptId) {
-    global $igrtSqli;
     $getSQL = "SELECT * FROM edExptStatic_refactor WHERE exptId=$exptId";
-    $getResult = $igrtSqli->query($getSQL);
-    if ($getResult) {
+    $getResult = $this->igrtSqli->query($getSQL);
+    if ($getResult->num_rows>0) {
       $row = $getResult->fetch_object();
       return $row->step2Sequential;
     }
@@ -93,22 +90,21 @@ class step2Controller {
   }
 
   function getJ($exptId, $jType) {
-    global $igrtSqli;
     $jList = array();
     $dayQry = "SELECT DISTINCT(dayNo) AS dayNo FROM md_dataStep1reviewed WHERE exptId=$exptId AND jType=$jType ORDER BY dayNo ASC";
     //$retDebug = $dayQry; 
-    $dayResult = $igrtSqli->query($dayQry);
-    if ($dayResult) {
+    $dayResult = $this->igrtSqli->query($dayQry);
+    if ($dayResult->num_rows>0) {
       while ($dayRow = $dayResult->fetch_object()) {
         $sessQry = "SELECT DISTINCT(sessionNo) as sessionNo FROM md_dataStep1reviewed WHERE exptId=$exptId AND jType=$jType AND dayNo=$dayRow->dayNo ORDER BY sessionNo ASC ";
         //$retDebug .= ' : '.$sessQry;
-        $sessResult = $igrtSqli->query($sessQry);
-        if ($sessResult) {
+        $sessResult = $this->igrtSqli->query($sessQry);
+        if ($sessResult->num_rows>0) {
           while ($sessRow = $sessResult->fetch_object()) {
             $xQry = "SELECT DISTINCT(jNo) AS jNo FROM md_dataStep1reviewed WHERE exptId=$exptId AND jType=$jType AND reviewed=1 AND canUse=1 AND sessionNo=$sessRow->sessionNo AND dayNo=$dayRow->dayNo ORDER BY jNo ASC";
             //$retDebug .= ' : '.$xQry;
-            $xResult = $igrtSqli->query($xQry);
-            if ($xResult) {
+            $xResult = $this->igrtSqli->query($xQry);
+            if ($xResult->num_rows>0) {
               $Discards = $this->getDiscards($exptId, $dayRow->dayNo, $sessRow->sessionNo, $jType);
               while ($jNoRow = $xResult->fetch_object()) {
                 $jNo = $jNoRow->jNo;
@@ -119,8 +115,8 @@ class step2Controller {
                 else {
                   $qQry = "SELECT * FROM md_dataStep1reviewed WHERE exptId=$exptId AND jType=$jType AND reviewed=1 AND canUse=1 AND jNo=$jNo AND sessionNo=$sessRow->sessionNo AND dayNo=$dayRow->dayNo ORDER BY qNO ASC";
                   //$retDebug .= ' : '.$qQry;
-                  $qResult = $igrtSqli->query($qQry);
-                  if ($qResult) {
+                  $qResult = $this->igrtSqli->query($qQry);
+                  if ($qResult->num_rows>0) {
                     // questions array to attach to judge
                     $qArray = array();
                     while ($qRow = $qResult->fetch_object()) {
@@ -203,11 +199,10 @@ class step2Controller {
 //  }
 
   function getDiscards($exptId, $dayNo, $sessionNo, $jType) {
-    global $igrtSqli;
     $retValue = 0;
     $getSummary = sprintf("SELECT * FROM wt_Step1Discards WHERE exptId='%s' AND dayNo='%s' AND sessionNo='%s'", $exptId, $dayNo, $sessionNo);
-    $summaryResults = $igrtSqli->query($getSummary);
-    if ($summaryResults) {
+    $summaryResults = $this->igrtSqli->query($getSummary);
+    if ($summaryResults->num_rows>0) {
       $summaryRow = $summaryResults->fetch_object();
       $retValue = ($jType == 1) ? $summaryRow->evenDiscards : $summaryRow->oddDiscards;
     }
@@ -241,29 +236,27 @@ class step2Controller {
   }
   
   function getSessionDetails($jType, $respId) {
-    global $igrtSqli;
     $sql = sprintf("SELECT * FROM wt_Step2pptStatus WHERE id='%s'", $respId);
     //echo $sql;
-    $sdResult = $igrtSqli->query($sql);
+    $sdResult = $this->igrtSqli->query($sql);
     $sdRow = $sdResult->fetch_object();
     $actualJNo = $sdRow->actualJNo;
     $isdSql = sprintf("SELECT * FROM wt_Step2Balancer WHERE exptId='%s' AND jType='%s' AND actualJNo='%s'", $this->exptId, $jType, $actualJNo);
     //echo $isdSql;
-    $isdResult = $igrtSqli->query($isdSql);
+    $isdResult = $this->igrtSqli->query($isdSql);
     $isdRow = $isdResult->fetch_object();
     $retArray = array('igrNo'=>$actualJNo, 'jNo' => $isdRow->jNo, 'dayNo' => $isdRow->dayNo, 'sessionNo'=> $isdRow->sessionNo, 'label' => $isdRow->label);
     return $retArray;
   }
   
   function getQuestion($exptId, $dayNo, $sessionNo, $jType, $jNo, $qNo, $pass = 0) {
-    global $igrtSqli;
     // get  #real# questions - dataQNo may not equal logical qNo due to discards
     $qQry = "SELECT * FROM md_dataStep1reviewed WHERE exptId=$exptId AND reviewed=1 AND canUse=1 AND dayNo=$dayNo AND sessionNo=$sessionNo AND jType=$jType AND jNo=$jNo AND q!= 'FINAL' ORDER BY qNo ASC" ;
 //    if ($pass == 1) { echo $qNo.'----'; }
-    $qResult = $igrtSqli->query($qQry);
+    $qResult = $this->igrtSqli->query($qQry);
 		$qList = [];
 		$qPtr = 1;
-    if ($qResult) {
+    if ($qResult->num_rows>0) {
 			while ($qRow = $qResult->fetch_object()) {
 				$qDef = [
 					'jQ' => $qRow->q,
@@ -294,7 +287,6 @@ class step2Controller {
   }
   
   function getStep2StartParameters($jType, $restartUID, $userCode = '') {
-    global $igrtSqli;
     $html = '';
     $pptNo = 0;
     $igrChosen = $this->chooseIGR($jType, $restartUID, $userCode);
@@ -303,8 +295,8 @@ class step2Controller {
     }
     else {
       $maxSql = sprintf("SELECT MAX(respNo) AS pptPtr FROM wt_Step2pptStatus WHERE exptId='%s' AND jType='%s' AND actualJNo='%s'", $this->exptId, $jType, $igrChosen);
-      $maxResult = $igrtSqli->query($maxSql);
-      if ($maxResult) {
+      $maxResult = $this->igrtSqli->query($maxSql);
+      if ($maxResult->num_rows>0) {
         $maxRow = $maxResult->fetch_object();
         $pptNo = $maxRow->pptPtr;
         ++$pptNo;
@@ -312,19 +304,18 @@ class step2Controller {
       $insSql = sprintf("INSERT INTO wt_Step2pptStatus (exptId, jType, actualJNo, respNo, finished, chrono, userCode, restartUID) "
         . "VALUES('%s', '%s', '%s', '%s', '0', NOW(),'%s' ,'%s')",
         $this->exptId, $jType, $igrChosen, $pptNo, $userCode, $restartUID);
-      $igrtSqli->query($insSql);
-      $respId = $igrtSqli->insert_id;
+      $this->igrtSqli->query($insSql);
+      $respId = $this->igrtSqli->insert_id;
       $s2params = array('pptNo'=> $pptNo, 'respId'=>$respId, 'igrChosen'=>$igrChosen);
     }
     return $s2params;
   }
  
   function storeStep2Reply($exptId, $jType, $pptNo, $respId, $qNo, $pReply, $alignment, $isAligned, $correctedReply) {
-    global $igrtSqli;
     $reply = urldecode($pReply);
-    $db_reply = $igrtSqli->real_escape_string($reply);
+    $db_reply = $this->igrtSqli->real_escape_string($reply);
     $i_correctedReply = urldecode($correctedReply);
-    $db_correctedReply = $igrtSqli->real_escape_string($i_correctedReply);
+    $db_correctedReply = $this->igrtSqli->real_escape_string($i_correctedReply);
     $sessionDetails = $this->getSessionDetails($jType, $respId);
     $dayNo = $sessionDetails['dayNo'];
     $sessionNo = $sessionDetails['sessionNo'];
@@ -333,7 +324,7 @@ class step2Controller {
                   chrono, jType, jNo, qNo, reply, pptNo, hasAlignmentData, isAligned, correctedReply)
                   VALUES ($respId, $exptId, $dayNo, $sessionNo, NOW(), $jType, $jNo, "
         . "$qNo, '$db_reply', $pptNo, $alignment, $isAligned, '$db_correctedReply')";
-    $igrtSqli->query($insertQry);
+    $this->igrtSqli->query($insertQry);
     //echo $insertQry;
     ++$qNo;
     $s2Array = $this->getQuestion($exptId, $dayNo, $sessionNo, $jType, $jNo, $qNo, 1);
@@ -349,6 +340,7 @@ class step2Controller {
     
   function __construct($exptId) {
     global $igrtSqli;
+    $this->igrtSqli = $igrtSqli;
     $this->exptId = $exptId;
     $this->eModel = new experimentModel($exptId);
     $this->tabIndex = 1;   // 

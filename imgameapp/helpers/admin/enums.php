@@ -9,4 +9,6 @@ const returnAsObject = 2;
 // permissions/ actions levels
 const canModifyLevel = 128;
 
+const returnASC = 1;
+const returnDESC = 2;
 

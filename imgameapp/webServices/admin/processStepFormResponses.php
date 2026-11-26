@@ -6,7 +6,7 @@ include_once $root_path.'/helpers/parseJSON.php';
 
 $getJSONItems = sprintf("SELECT * FROM jsonStepFormsData");
 $getJSONResult = $igrtSqli->query($getJSONItems);
-if ($getJSONResult) {
+if ($getJSONResult->num_rows>0) {
   while ($jsonRow = $getJSONResult->fetch_object()) {
     $chrono = $jsonRow->chrono;
     $rawBody = $jsonRow->json;

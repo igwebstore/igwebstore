@@ -38,7 +38,7 @@ if ($permissions >= 128) {
       $tempValue = array('partPopulated' => 0, 'definitionComplete'=>0, 'formName'=>$formTypes[$i]->formName, 'formType'=>$formTypes[$i]->formName);
       $getStatusQry = sprintf("SELECT * FROM fdStepForms WHERE exptId='%s' AND formType='%s'", $exptId, $i);
       $getStatusResult = $igrtSqli->query($getStatusQry);
-      if ($getStatusResult) {
+      if ($getStatusResult->num_rows>0) {
         $tempValue['partPopulated'] = 1;
         $getStatusRow = $getStatusResult->fetch_object();
         $tempValue['definitionComplete'] = $getStatusRow->definitionComplete;

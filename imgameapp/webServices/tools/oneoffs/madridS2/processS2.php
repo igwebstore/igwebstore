@@ -159,7 +159,7 @@ function processData($s2store) {
       $exptId, $dayNo, $sessionNo, $jNo, ($qNo+1), $pptNo);
     //echo $checkQry.'<br />';
     $igrtSqli->query($checkQry);
-    if ($igrtSqli->affected_rows == 0) {
+    if ($igrtSqli->num_rows == 0) {
       $insert = sprintf("INSERT INTO dataSTEP2 (exptId, dayNo, sessionNo, jType, jNo, qNo, pptNo, reply) "
         . "VALUES ('%s', '%s', '%s', '0', '%s', '%s', '%s', '%s')",
         $exptId, $dayNo, $sessionNo, $jNo, ($qNo + 1), $pptNo, $igrtSqli->real_escape_string($reply));

@@ -21,7 +21,7 @@ if (!isset($root_path)) { $root_path = $_SERVER['DOCUMENT_ROOT']; }
   $sqlQry_Login=sprintf("SELECT * FROM igUsers WHERE email='%s' AND password='%s';",$email,$hash_str);
   //$sqlQry_Login=sprintf("SELECT * FROM igUsers WHERE email='%s'",$email);
   $loginResult=$igrtSqli->query($sqlQry_Login);
-  if ($loginResult)
+  if ($loginResult->num_rows>0)
   {
       $row=$loginResult->fetch_object();
       $jSonOut['uid']=$row->id;

@@ -2,7 +2,7 @@
 // -----------------------------------------------------------------------------
 // 
 // web service to support AJAX calls generated from experiment creation and
-// configuration registrationViews
+// configuration pages
 // 
 // -----------------------------------------------------------------------------
 //ini_set('display_errors', 'Off');
@@ -10,16 +10,21 @@
 
 
 if (!isset($root_path)) { $root_path = $_SERVER['DOCUMENT_ROOT']; }
+include_once $root_path.'/domainSpecific/mySqlObject.php';
 require_once($root_path.'/helpers/admin/class.experimentConfigurator.php');
+
 $permissions = $_GET['permissions'];
 $uid = $_GET['uid'];
 $messageType = $_GET['messageType'];
 $content = $_GET['content'];
 $exptId = isset($_GET['exptId']) ? $_GET['exptId'] : -1;
+
 //echo $messageType; die;
 
   function processMessage($_messageType, $_content, $uid, $exptId) {
-    $exptConfigurator = new experimentConfigurator($uid, $exptId);
+    global $igrtSqli;
+    
+    $exptConfigurator = new experimentConfigurator($igrtSqli, $uid, $exptId);
     switch ($_messageType) {
       case "adminHubItems" : {
         //$exptConfigurator->debugLog("started debugging");

@@ -1,15 +1,15 @@
 <?php
 /**
  * stepForms Configuration
- * top-level controller to create/delete experiments
+ * top-level configurator for forms/surveys
  * @author MartinHall
  */
 ini_set('display_errors', 'On');
 error_reporting(E_ALL);
 if (!isset($root_path)) { $root_path = $_SERVER['DOCUMENT_ROOT']; }
-include_once $root_path.'/domainSpecific/mySqlObject.php';
 include_once $root_path.'/helpers/models/class.experimentModel.php';
 include_once $root_path.'/helpers/forms/class.stepFormsHandler.php';
+include_once $root_path.'/helpers/admin/class.stepFormsUserUI.php';
 include_once $root_path.'/helpers/debug/class.debugLogger.php';
 include_once $root_path.'/helpers/parseJSON.php';
 
@@ -21,6 +21,8 @@ class stepFormsConfigurator {
   private $formType = -1;
   private $exptId;
   private $jType;
+  private $igrtSqli;
+  private $userId;
 
 // <editor-fold defaultstate="collapsed" desc=" form configuration JSON functions">
   
@@ -73,11 +75,19 @@ class stepFormsConfigurator {
   }
   
   function getStepFormJSON() {
-    $stepFormsHandler = new stepFormsHandler($this->exptId, $this->formType);
-	  $this->formType = $this->formType > -1 ? $this->formType : $stepFormsHandler->getFormType();
-	  $this->formName = $stepFormsHandler->getFormName();
-	  $this->formDef = $stepFormsHandler->getForm();
-	  $stepFormsHandler->setJType($this->jType);
+    $stepFormsHandler = new stepFormsHandler($this->igrtSqli, $this->exptId, $this->formType);
+    $stepFormsHandler->setJType($this->jType);    // used by runtime
+    
+    $this->formType = $this->formType > -1 ? $this->formType : $stepFormsHandler->getFormType();  // used?
+    
+    $this->formDef = $stepFormsHandler->getForm();
+    $this->formName = $this->formDef['formName'];                                                 // used?
+    
+    if (!is_null($this->userId)) {    // if userId is set, then being used by the admin config page so need UI accordion states
+      $stepFormsUserUI = new stepFormsUserUI($this->igrtSqli, $this->exptId, $this->formType, $this->userId);
+      $this->formDef = $stepFormsUserUI->processUserUIStates($this->formDef);
+    }
+    
     return $this->buildStepFormJSON();
   }
   
@@ -96,49 +106,49 @@ class stepFormsConfigurator {
   }
 
   function AddOption($optionType, $pageNo, $qNo, $optionNo) {
-    $stepFormsHandler = new stepFormsHandler($this->exptId, $this->formType);
+    $stepFormsHandler = new stepFormsHandler($this->igrtSqli, $this->exptId, $this->formType);
     $stepFormsHandler->addOption($optionType, $pageNo, $qNo, $optionNo);
     return $this->getReloadMessage();  
   }
   
   function DelOption($optionType, $pageNo, $qNo, $optionNo) {
-    $stepFormsHandler = new stepFormsHandler($this->exptId, $this->formType);
+    $stepFormsHandler = new stepFormsHandler($this->igrtSqli, $this->exptId, $this->formType);
     $stepFormsHandler->delOption($optionType, $pageNo, $qNo, $optionNo);
     return $this->getReloadMessage();  
   }
   
   function AddQuestion($pageNo, $newQNo) {
-    $stepFormsHandler = new stepFormsHandler($this->exptId, $this->formType);
+    $stepFormsHandler = new stepFormsHandler($this->igrtSqli, $this->exptId, $this->formType);
     $stepFormsHandler->addQuestion($pageNo, $newQNo);
     return $this->getReloadMessage();  
   }
 
   function CloneQuestion($pageNo, $srcQNo) {
-    $stepFormsHandler = new stepFormsHandler($this->exptId, $this->formType);
+    $stepFormsHandler = new stepFormsHandler($this->igrtSqli, $this->exptId, $this->formType);
     $stepFormsHandler->cloneQuestion($pageNo, $srcQNo);
     return $this->getReloadMessage();  
   }
 
   function DelQuestion($pageNo, $delQNo) {
-    $stepFormsHandler = new stepFormsHandler($this->exptId, $this->formType);
+    $stepFormsHandler = new stepFormsHandler($this->igrtSqli, $this->exptId, $this->formType);
     $stepFormsHandler->delQuestion($pageNo, $delQNo);
     return $this->getReloadMessage();  
   }
 
   function AddPage($pageNo) {
-    $stepFormsHandler = new stepFormsHandler($this->exptId, $this->formType);
+    $stepFormsHandler = new stepFormsHandler($this->igrtSqli, $this->exptId, $this->formType);
     $stepFormsHandler->addPage($pageNo);
     return $this->getReloadMessage();  
   }
 
   function ClonePage($srcPageNo) {
-    $stepFormsHandler = new stepFormsHandler($this->exptId, $this->formType);
+    $stepFormsHandler = new stepFormsHandler($this->igrtSqli, $this->exptId, $this->formType);
     $stepFormsHandler->clonePage($srcPageNo);
     return $this->getReloadMessage();  
   }
   
   function DelPage($pageNo) {
-    $stepFormsHandler = new stepFormsHandler($this->exptId, $this->formType);
+    $stepFormsHandler = new stepFormsHandler($this->igrtSqli, $this->exptId, $this->formType);
     $stepFormsHandler->delPage($pageNo);
     return $this->getReloadMessage();  
   }
@@ -208,7 +218,7 @@ class stepFormsConfigurator {
   }
   
   function getStepFormRuntimeJSON($formType, $restartUID, $respId) {
-    $stepFormsHandler = new stepFormsHandler($this->exptId, $this->formType);
+    $stepFormsHandler = new stepFormsHandler($this->igrtSqli, $this->exptId, $this->formType);
     $this->formType = $formType;
     $this->formDef = $stepFormsHandler->getForm($formType);
     return $this->buildStepFormRuntimeJSON($restartUID, $respId);
@@ -483,7 +493,7 @@ class stepFormsConfigurator {
     $jSonRep.= "\"nullRecruitmentCodeOptionLabel\":" . JSONparse($this->formDef['nullRecruitmentCodeOptionLabel']) . ","; 
 
         
-    $jSonRep.= $this->formDef['registrationViews'][0]['ignorePage'] == 1 ? "\"bypassPages\":true," : "\"bypassPages\":false,";
+    $jSonRep.= $this->formDef['pages'][0]['ignorePage'] == 1 ? "\"bypassPages\":true," : "\"bypassPages\":false,";
     $jSonRep.= "\"eqOptionSelected\":\"\",";
     $jSonRep.= "\"eqOptions\":[";
     for ($eo=0; $eo<count($this->formDef['eligibilityQ']['options']); $eo++) {
@@ -499,22 +509,22 @@ class stepFormsConfigurator {
         $jSonRep.= "\"label\":" . JSONparse($this->formDef['eligibilityQ']['options'][$eo]['label']) . ",";
         $countRelevantSections = 0;
         $jSonRep.= "\"eligibleSections\":[";
-          if ($this->formDef['registrationViews'][0]['ignorePage'] == 0) {
-            for ($p=0; $p<count($this->formDef['registrationViews']); $p++) {
+          if ($this->formDef['pages'][0]['ignorePage'] == 0) {
+            for ($p=0; $p<count($this->formDef['pages']); $p++) {
               $includePage = false;
               if ($this->formDef['useEligibilityQ'] === '1') {
-                if ( ($this->formDef['registrationViews'][$p]['contingentPage'] == 1)
-                    && ($this->formDef['registrationViews'][$p]['contingentText'] == $this->formDef['eligibilityQ']['options'][$eo]['label']) ) {
+                if ( ($this->formDef['pages'][$p]['contingentPage'] == 1)
+                    && ($this->formDef['pages'][$p]['contingentText'] == $this->formDef['eligibilityQ']['options'][$eo]['label']) ) {
                   $includePage = true;
                 }
                 else {
-                  if ($this->formDef['registrationViews'][$p]['contingentPage'] == 0) {
+                  if ($this->formDef['pages'][$p]['contingentPage'] == 0) {
                     $includePage = true;
                   }
                 }
               }
               else {
-                if ($this->formDef['registrationViews'][$p]['jType'] == $this->jType) {
+                if ($this->formDef['pages'][$p]['jType'] == $this->jType) {
                   $includePage = true;
                 }
               }
@@ -523,35 +533,35 @@ class stepFormsConfigurator {
                 $jSonRep.= "{";
                   $jSonRep.= "\"pageNo\":\"" . $countRelevantSections . "\",";
                   $jSonRep.= "\"pageNoLabel\":\"" . intval($countRelevantSections + 1) . "\",";
-                  $jSonRep.= "\"pageTitle\":" . JSONparse($this->formDef['registrationViews'][$p]['pageTitle']) . ",";
+                  $jSonRep.= "\"pageTitle\":" . JSONparse($this->formDef['pages'][$p]['pageTitle']) . ",";
                   $jSonRep.= "\"pageInst\":["; 
-                    $paraArray = makeParaArray($this->formDef['registrationViews'][$p]['pageInst']);
+                    $paraArray = makeParaArray($this->formDef['pages'][$p]['pageInst']);
                     for ($line=0; $line<count($paraArray); $line++) {
                       if ($line > 0) { $jSonRep.=","; }
                       $jSonRep.= "{\"para\":" . JSONparse($paraArray[$line]) . "}"; 
                     }
                   $jSonRep.= "],";
-                  $jSonRep.= $this->formDef['registrationViews'][$p]['ignorePage'] == 1 ? "\"ignorePage\":true," : "\"ignorePage\":false,";
-                  $jSonRep.= "\"pageButtonLabel\":" . JSONparse($this->formDef['registrationViews'][$p]['pageButtonLabel']) . ",";
-                  if ($this->formDef['registrationViews'][$p]['q0isFilter'] == 1) {
+                  $jSonRep.= $this->formDef['pages'][$p]['ignorePage'] == 1 ? "\"ignorePage\":true," : "\"ignorePage\":false,";
+                  $jSonRep.= "\"pageButtonLabel\":" . JSONparse($this->formDef['pages'][$p]['pageButtonLabel']) . ",";
+                  if ($this->formDef['pages'][$p]['q0isFilter'] == 1) {
                     $jSonRep.= "\"filterPage\":true,";
-                    $jSonRep.= $this->buildFilterQuestionJSON($this->formDef['registrationViews'][$p]['questions'][0]);
+                    $jSonRep.= $this->buildFilterQuestionJSON($this->formDef['pages'][$p]['questions'][0]);
                   }
                   else {
                     $jSonRep.= "\"filterPage\":false,";
                     $jSonRep.= $this->buildEmptyFilterQuestionJSON();
                   }
                   $jSonRep.= "\"filterOptions\":[";
-                    if ($this->formDef['registrationViews'][$p]['q0isFilter'] == 1) {
-                      for ($fon=0; $fon<count($this->formDef['registrationViews'][$p]['questions'][0]['options']); $fon++) {
-                        $optionLabel = $this->formDef['registrationViews'][$p]['questions'][0]['options'][$fon]['label'];
+                    if ($this->formDef['pages'][$p]['q0isFilter'] == 1) {
+                      for ($fon=0; $fon<count($this->formDef['pages'][$p]['questions'][0]['options']); $fon++) {
+                        $optionLabel = $this->formDef['pages'][$p]['questions'][0]['options'][$fon]['label'];
                         if ($fon>0) { $jSonRep.=","; }
                         $jSonRep.= "{";
                           $jSonRep.= "\"optionLabel\":". JSONparse($optionLabel) . ",";
-                          $jSonRep.= "\"optionId\":\"" . $this->formDef['registrationViews'][$p]['questions'][0]['options'][$fon]['id'] . "\",";
+                          $jSonRep.= "\"optionId\":\"" . $this->formDef['pages'][$p]['questions'][0]['options'][$fon]['id'] . "\",";
                           $subQCnt = -1;
                           $jSonRep.= "\"questions\":[";
-                            $jSonRep.= $this->buildQuestionsJSON(true, $optionLabel, $this->formDef['registrationViews'][$p], $subQCnt, $subQAnsweredArray, $isSliderArray, $slidersAnswered);
+                            $jSonRep.= $this->buildQuestionsJSON(true, $optionLabel, $this->formDef['pages'][$p], $subQCnt, $subQAnsweredArray, $isSliderArray, $slidersAnswered);
                           $jSonRep.= "],";
                           $jSonRep.= "\"questionCount\":\"". $subQCnt . "\",";
                           $jSonRep.= "\"questionAnswered\":[";
@@ -581,7 +591,7 @@ class stepFormsConfigurator {
                         $jSonRep.= "\"optionId\":\"-1\",";
                         $subQCnt = -1;
                         $jSonRep.= "\"questions\":[";
-                          $jSonRep.= $this->buildQuestionsJSON(false, "", $this->formDef['registrationViews'][$p], $subQCnt, $subQAnsweredArray, $slidersUsed, $logicalSliderNos);
+                          $jSonRep.= $this->buildQuestionsJSON(false, "", $this->formDef['pages'][$p], $subQCnt, $subQAnsweredArray, $slidersUsed, $logicalSliderNos);
                         $jSonRep.= "],";
                         $jSonRep.= "\"questionCount\":\"". $subQCnt . "\",";
                         $jSonRep.= "\"questionAnswered\":[";
@@ -633,7 +643,7 @@ class stepFormsConfigurator {
     global $igrtSqli;
     $controlQry = "SELECT * FROM igControlTypes";
     $controlResults = $igrtSqli->query($controlQry);
-    if ($controlResults) {
+    if ($controlResults->num_rows>0) {
       while ($row = $controlResults->fetch_object()) {
         $controlDetail = array(
           'id' => $row->cValue,
@@ -646,16 +656,15 @@ class stepFormsConfigurator {
 // </editor-fold>
                        
 // <editor-fold defaultstate="collapsed" desc=" constructor">
-  function __construct() {
-    $this->exptId = $GLOBALS['exptId'];
+  function __construct($_igrtSqli, $_exptId, $_formType, $_userId) {
+    $this->igrtSqli = $_igrtSqli;
+    $this->exptId = $_exptId;
+    $this->formType = $_formType;
+    $this->userId = $_userId;
+    
+    // may need some stuff from POST/GET
     if (isset($GLOBALS['jType'])) { $this->jType = $GLOBALS['jType']; }
-    if (isset($GLOBALS['formType'])) { 
-      $this->formType = $GLOBALS['formType'];
-    }
-    else {
-      $this->formType = -1;
-    }      
-    if (isset($GLOBALS['formName'])) { 
+    if (isset($GLOBALS['formName'])) {
       $this->formName = $GLOBALS['formName']; 
     }
     $this->getControlItems();

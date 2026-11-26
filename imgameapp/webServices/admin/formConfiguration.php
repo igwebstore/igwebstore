@@ -2,7 +2,7 @@
 // -----------------------------------------------------------------------------
 // 
 // web service to support AJAX calls generated from step form
-// configuration registrationViews
+// configuration pages
 // 
 // uses class.stepFormsHandler.php which is used at this configuration stage
 // and also at runtime where it builds the form
@@ -11,13 +11,16 @@
 ini_set('display_errors', 'On');
 error_reporting(E_ALL);
 if (!isset($root_path)) { $root_path = $_SERVER['DOCUMENT_ROOT']; }
+include_once $root_path . '/domainSpecific/mySqlObject.php';
 require_once($root_path.'/helpers/admin/class.stepFormsConfigurator.php');
 include_once($root_path."/classes/doPost.php");
 $permissions = $_GET['permissions'];
 $messageType = $_GET['messageType'];
-$formName = $_GET['formName'];
+$formType = $_GET['formType'];
 $exptId = $_GET['exptId'];
+$userId = $_GET['uid'];
 $content = $_GET['content'];
+$userId = $_GET['userId'];
 
   function rePost() {
     global $permissions, $uid, $messageType, $formName, $exptId;
@@ -35,8 +38,9 @@ $content = $_GET['content'];
     $this->postie->do_curl_post($this->domain, $postdata);    
   }
 
-  function processMessage($_messageType, $formName, $_content, $exptId) {
-    $formConfigurator = new stepFormsConfigurator($exptId, $formName);
+  function processMessage($exptId, $formType, $_messageType, $_content) {
+    global $igrtSqli, $userId;
+    $formConfigurator = new stepFormsConfigurator($igrtSqli, $exptId, $formType, $userId);
     switch ($_messageType) {
       case "stepFormConfig" : {
         rePost();
@@ -101,7 +105,7 @@ $content = $_GET['content'];
 
 //ensure admin
 if ($permissions >= 128) {
-  $retMsg = processMessage($messageType, $formName, $content, $exptId);
+  $retMsg = processMessage($exptId, $formType, $messageType, $content);
   //$retMsg= "<message><messageType>$messageType</messageType><content>$content</content><exptId>$exptId</exptId></message>";
   echo $retMsg;
 }
